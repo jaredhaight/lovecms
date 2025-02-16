@@ -1,0 +1,9 @@
+{
+    "last_site": 1,
+    "sites": [
+        {
+            "id": 1,
+            "path": "/foo"
+        }
+    ]
+}
