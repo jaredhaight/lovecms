@@ -1,9 +1,6 @@
 {
-    "last_site": 1,
+    "current_site": "/tmp/lovecms-site/content",
     "sites": [
-        {
-            "id": 1,
-            "path": "/foo"
-        }
+        "/tmp/lovecms-site/content"
     ]
 }

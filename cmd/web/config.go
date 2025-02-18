@@ -8,13 +8,8 @@ import (
 )
 
 type Config struct {
-	LastSite int
-	Sites    []Site
-}
-
-type Site struct {
-	Id   int
-	Path string
+	CurrentSite string `json:"current_site"`
+	Sites       []string
 }
 
 func (app *application) loadLoveConfig() {
@@ -26,7 +21,12 @@ func (app *application) loadLoveConfig() {
 		log.Fatal(err)
 	}
 
-	defer configFile.Close()
+	defer func(configFile *os.File) {
+		err := configFile.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(configFile)
 
 	decoder := json.NewDecoder(configFile)
 	err = decoder.Decode(&app.loveConfig)
@@ -42,7 +42,13 @@ func (app *application) loadHugoConfig() {
 		log.Fatal(err)
 	}
 
-	defer tomlFile.Close()
+	defer func(tomlFile *os.File) {
+		err := tomlFile.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(tomlFile)
+
 	decoder := toml.NewDecoder(tomlFile)
 	err = decoder.Decode(&app.hugoConfig)
 	if err != nil {
