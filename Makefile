@@ -9,5 +9,5 @@ vet: fmt
 	go vet ./...
 
 build: vet
-	cd ./ui && npx @tailwindcss/cli -i .\style\lovecms.css -o .\static\lovecms.css
-	go build ./cmd/web
+	tailwindcss -i ./ui/style/lovecms.css -o ./ui/static/lovecms.css
+	go build -o ./dist/web ./cmd/web
