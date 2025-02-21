@@ -1,0 +1,18 @@
+﻿{{define "base"}}
+<!doctype html>
+<html lang='en'>
+    <head>
+        <meta charset='utf-8'>
+        <title>❤️CMS</title>
+        <link rel='stylesheet' href='/static/css/lovecms.css'>
+    </head>
+    <body>
+        <header>
+            <h1 class=""><a href='/'>Home</a></h1>
+        </header>
+        <main>
+            {{template "main" .}}
+        </main>
+    </body>
+</html>
+{{end}}

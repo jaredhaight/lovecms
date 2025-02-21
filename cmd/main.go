@@ -3,29 +3,51 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/dusted-go/logging/prettylog"
 	"github.com/jaredhaight/lovecms/internal/config"
 	"github.com/jaredhaight/lovecms/internal/handlers"
-	"log"
+	"log/slog"
 	"net/http"
 )
 
+var debugLogging = flag.Bool("debug", false, "Enable debug logging")
+
 func main() {
-	// Get our paths
-	configPath := *flag.String("config", "config.json", "Path to the LoveCMS config file")
+	// parse flags
 	flag.Parse()
 
-	cfg := config.MustLoadConfig(configPath)
+	// logging defaults
+	logLevel := slog.LevelInfo
+	addSource := false
 
+	if *debugLogging {
+		logLevel = slog.LevelDebug
+		addSource = true
+	}
+
+	// setup logging
+	opts := &slog.HandlerOptions{
+		Level:     logLevel,
+		AddSource: addSource,
+	}
+
+	logger := slog.New(prettylog.NewHandler(opts))
+
+	// load config
+	cfg := config.MustLoadConfig(logger)
+
+	// setup our servers
 	mux := http.NewServeMux()
 	fileServer := http.FileServer(http.Dir("./static"))
 
+	// setup handlers
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 	mux.HandleFunc("/", handlers.NewHomeHandler().ServeHTTP)
-	log.Println("message", "2", "3")
-	log.Printf("Starting server on %d\n", cfg.Port)
+
+	// start server
+	logger.Info(fmt.Sprintf("Starting server on http://localhost:%d", cfg.Port))
 
 	port := fmt.Sprintf(":%d", cfg.Port)
-
 	err := http.ListenAndServe(port, mux)
-	log.Fatal("Error starting server", "error", err)
+	logger.Error("Error starting server", "error", err)
 }
