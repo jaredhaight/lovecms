@@ -1,6 +1,6 @@
 {
-    "current_site": "/tmp/lovecms-site/content",
-    "sites": [
-        "/tmp/lovecms-site/content"
-    ]
+  "current_site": "C:\\temp\\lovecms-site",
+  "sites": [
+    "C:\\temp\\lovecms-site"
+  ]
 }
