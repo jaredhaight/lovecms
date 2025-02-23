@@ -10,20 +10,12 @@ test:
 
 .PHONY: tailwind-watch
 tailwind-watch:
-	tailwindcss -i .\static\css\input.css -o .\static\css\style.css --watch
+	tailwindcss -i .\static\css\input.css -o .\static\css\lovecms.min.css --watch
 
 .PHONY: tailwind-build
 tailwind-build:
-	tailwindcss -i .\static\css\input.css -o .\static\css\style.min.css --minify
+	tailwindcss -i .\static\css\input.css -o .\static\css\lovecms.min.css --minify
 
-.PHONY: templ-watch
-templ-watch:
-	templ generate --watch
-
-.PHONY: templ-generate
-templ-generate:
-	templ generate
-	
 .PHONY: dev
 dev:
 	go build -o C:\temp .\cmd\main.go && air
@@ -31,5 +23,4 @@ dev:
 .PHONY: build
 build:
 	make tailwind-build
-	make templ-generate
 	go build -o .\bin\$(APP_NAME).exe .\cmd\main.go

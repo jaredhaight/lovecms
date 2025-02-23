@@ -1,9 +1,9 @@
 ﻿{{ define "main" }}
 <div class="flex h-full">
     <div class="flex-row">
-        <p class="text-sm">Hooommeee</p>
-        <p class="text-lg">Hooome</p>
-        <p class="text-xl"></p>
+        {{ range . }}
+            <p>{{.Title }} - {{ .FilePath }}</p>
+        {{ end }}
     </div>
 </div>
 {{ end }}

@@ -4,13 +4,15 @@
     <head>
         <meta charset='utf-8'>
         <title>❤️CMS</title>
-        <link rel='stylesheet' href='/static/css/lovecms.css'>
+        <link rel='stylesheet' href='/static/css/lovecms.min.css'>
     </head>
     <body>
         <header>
-            <h1 class=""><a href='/'>Home</a></h1>
+            <div class="flex flex-row items-center p-2 w-full">
+                <h1 class="text-xl"><a href='/'>❤️CMS</a></h1>
+            </div>
         </header>
-        <main>
+        <main class="mx-auto max-w-md">
             {{template "main" .}}
         </main>
     </body>

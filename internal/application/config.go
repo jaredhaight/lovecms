@@ -1,4 +1,4 @@
-package config
+package application
 
 import (
 	"encoding/json"
@@ -10,9 +10,8 @@ import (
 )
 
 type Config struct {
-	Port        int      `json:"port"`
-	CurrentSite string   `json:"current_site"`
-	Sites       []string `json:"sites"`
+	Port     int    `json:"port"`
+	SitePath string `json:"site_path"`
 }
 
 func loadConfig(logger *slog.Logger) (*Config, error) {
