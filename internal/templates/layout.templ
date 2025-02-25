@@ -1,0 +1,28 @@
+package templates
+
+templ header() {
+    <header>
+        <div class="flex flex-row justify-center p-2">
+            <h1 class="text-xl"><a href='/'>❤️CMS</a></h1>
+        </div>
+    </header>
+}
+
+templ Layout(contents templ.Component) {
+<!doctype html>
+<html lang='en'>
+	<head>
+		<title>❤️CMS</title>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<link rel="stylesheet" href="/static/css/lovecms.css"/>
+		<script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+	</head>
+	<body class="flex flex-col h-full">
+        @header()
+		<main class="flex-1 container">
+            @contents
+		</main>
+	</body>
+</html>
+}

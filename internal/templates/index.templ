@@ -1,0 +1,14 @@
+package templates
+
+import "github.com/jaredhaight/lovecms/internal/posts"
+
+templ Index(posts map[string]posts.Post) {
+<div class="flex h-full px-10 md:px-20">
+    <div class="flex-row">
+        for _, post := range posts {
+          <h1>{ post.Title }</h1>
+          <p>{ post.Content }</p>
+        }
+    </div>
+</div>
+}

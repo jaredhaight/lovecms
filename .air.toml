@@ -5,7 +5,7 @@ tmp_dir = "tmp"
 [build]
   args_bin = []
   bin = ".\\bin\\lovecms.exe"
-  cmd = "go build -o .\\bin\\lovecms.exe .\\cmd"
+  cmd = "tailwindcss -i .\\static\\css\\input.css -o .\\static\\css\\lovecms.css && templ generate && go build -o .\\bin\\lovecms.exe .\\cmd"
   delay = 0
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]
   exclude_file = []
@@ -43,3 +43,8 @@ tmp_dir = "tmp"
 [screen]
   clear_on_rebuild = false
   keep_scroll = true
+
+[proxy]
+  enabled = true
+  proxy_port = 8994
+  app_port = 8143

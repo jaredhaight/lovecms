@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/dusted-go/logging/prettylog"
-	"github.com/jaredhaight/lovecms/internal/application"
+	"github.com/jaredhaight/lovecms/internal"
 	"github.com/jaredhaight/lovecms/internal/handlers"
 	"log/slog"
 	"net/http"
@@ -34,7 +34,7 @@ func main() {
 	logger := slog.New(prettylog.NewHandler(opts))
 
 	// load config
-	cfg := application.MustLoadConfig(logger)
+	cfg := internal.MustLoadConfig(logger)
 
 	// setup our servers
 	mux := http.NewServeMux()
