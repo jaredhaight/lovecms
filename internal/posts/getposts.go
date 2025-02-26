@@ -5,6 +5,7 @@ import (
 	"github.com/adrg/frontmatter"
 	"os"
 	"path/filepath"
+	"sort"
 )
 
 type FrontMatter struct {
@@ -17,7 +18,7 @@ type FrontMatter struct {
 	Tags         []string `yaml:"tags"`
 }
 
-func GetPosts(directoryPath string) (map[string]Post, error) {
+func GetPosts(directoryPath string) ([]Post, error) {
 	if directoryPath == "" {
 		return nil, errors.New("directoryPath is empty")
 	}
@@ -29,7 +30,7 @@ func GetPosts(directoryPath string) (map[string]Post, error) {
 	}
 
 	// create a post object for each item
-	posts := make(map[string]Post)
+	var posts []Post
 	for _, entry := range entries {
 		ext := filepath.Ext(entry.Name())
 
@@ -53,16 +54,20 @@ func GetPosts(directoryPath string) (map[string]Post, error) {
 			//       frontmatter.MustParse instead.
 
 			post := Post{
-				Title:     frontMatter.Title,
-				FilePath:  postPath,
-				Published: frontMatter.PublishDate,
-				Tags:      frontMatter.Tags,
-				Content:   string(rest),
+				Title:    frontMatter.Title,
+				FilePath: postPath,
+				Date:     frontMatter.Date,
+				Tags:     frontMatter.Tags,
+				Content:  string(rest),
 			}
 
-			posts[entry.Name()] = post
+			posts = append(posts, post)
 		}
 	}
 
+	// sort posts by date
+	sort.Slice(posts, func(i, j int) bool {
+		return posts[i].Date > posts[j].Date
+	})
 	return posts, nil
 }

@@ -1,9 +1,9 @@
 package templates
 
 import "github.com/jaredhaight/lovecms/internal/posts"
-var i = 0
 
-templ Index(posts map[string]posts.Post) {
+templ Index(posts []posts.Post) {
+    {{ var i = 0 }}
     <div class="flex-row prose">
         for _, post := range posts {
         if i != 0 {
@@ -16,7 +16,9 @@ templ Index(posts map[string]posts.Post) {
             <span class="badge badge-secondary mx-1">{ tag }</span>
           }
           </p>
-          <p class="text-sm">Published: { post.Published }</p>
+          <p class="text-sm">Published: <span x-data="{date: new Date($el.innerText)}"
+                                                x-text="date.toLocaleString()"
+            class="datetime">{ post.Date }</span></p>
         </div>
         {{ i += 1 }}
         }

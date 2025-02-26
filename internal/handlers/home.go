@@ -30,14 +30,14 @@ func (h *HomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	contentPath := path.Join(h.config.SitePath, "content")
 	// Load our posts
-	posts, err := posts.GetPosts(contentPath)
+	p, err := posts.GetPosts(contentPath)
 	if err != nil {
 		h.logger.Error("Error loading posts: ", "err", err)
 		http.Error(w, "Error parsing templates", http.StatusInternalServerError)
 		return
 	}
 
-	c := templates.Index(posts)
+	c := templates.Index(p)
 	err = templates.Layout(c).Render(r.Context(), w)
 
 	if err != nil {
