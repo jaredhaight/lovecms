@@ -16,11 +16,10 @@ templ Layout(contents templ.Component) {
 		<meta charset="UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 		<link rel="stylesheet" href="/static/css/lovecms.css"/>
-		<script src="https://unpkg.com/@tailwindcss/browser@4"></script>
 	</head>
 	<body class="flex flex-col h-full">
         @header()
-		<main class="flex-1 container">
+		<main class="flex h-full px-10 md:px-20 justify-center">
             @contents
 		</main>
 	</body>

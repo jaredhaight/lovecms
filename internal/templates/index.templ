@@ -1,14 +1,24 @@
 package templates
 
 import "github.com/jaredhaight/lovecms/internal/posts"
+var i = 0
 
 templ Index(posts map[string]posts.Post) {
-<div class="flex h-full px-10 md:px-20">
-    <div class="flex-row">
+    <div class="flex-row prose">
         for _, post := range posts {
-          <h1>{ post.Title }</h1>
-          <p>{ post.Content }</p>
+        if i != 0 {
+            <div class="divider"></div>
+        }
+        <div class="min-w-96">
+          <h2>{ post.Title }</h2>
+          <p class="text-sm">Tags:
+          for _, tag := range post.Tags {
+            <span class="badge badge-secondary mx-1">{ tag }</span>
+          }
+          </p>
+          <p class="text-sm">Published: { post.Published }</p>
+        </div>
+        {{ i += 1 }}
         }
     </div>
-</div>
 }
