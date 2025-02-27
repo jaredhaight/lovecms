@@ -1,20 +1,20 @@
 package handlers
 
 import (
-	"github.com/jaredhaight/lovecms/internal"
+	"github.com/jaredhaight/lovecms/internal/application"
 	"github.com/jaredhaight/lovecms/internal/posts"
 	"github.com/jaredhaight/lovecms/internal/templates"
 	"log/slog"
 	"net/http"
-	"path"
+	"path/filepath"
 )
 
 type HomeHandler struct {
-	config *internal.Config
-	logger *slog.Logger
+	config application.Config
+	logger slog.Logger
 }
 
-func NewHomeHandler(config *internal.Config, logger *slog.Logger) *HomeHandler {
+func NewHomeHandler(config application.Config, logger slog.Logger) *HomeHandler {
 	return &HomeHandler{
 		config: config,
 		logger: logger,
@@ -28,7 +28,7 @@ func (h *HomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/setup", http.StatusFound)
 	}
 
-	contentPath := path.Join(h.config.SitePath, "content")
+	contentPath := filepath.Join(h.config.SitePath, "content")
 	// Load our posts
 	p, err := posts.GetPosts(contentPath)
 	if err != nil {
@@ -37,31 +37,11 @@ func (h *HomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := templates.Index(p)
+	c := templates.Home(p)
 	err = templates.Layout(c).Render(r.Context(), w)
 
 	if err != nil {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 		return
 	}
-
-	//
-	//templates := []string{
-	//	"./templates/base.gohtml",
-	//	"./templates/home.gohtml",
-	//}
-	//
-	//ts, err := template.ParseFiles(templates...)
-	//
-	//if err != nil {
-	//	h.logger.Error("Error parsing templates", "err", err)
-	//	http.Error(w, "Error parsing templates", http.StatusInternalServerError)
-	//	return
-	//}
-	//
-	//err = ts.ExecuteTemplate(w, "base", posts)
-	//if err != nil {
-	//	h.logger.Error("Error parsing templates", "err", err)
-	//	http.Error(w, "Error rendering template", http.StatusInternalServerError)
-	//}
 }

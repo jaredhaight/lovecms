@@ -1,4 +1,4 @@
-package internal
+package application
 
 import (
 	"encoding/json"
@@ -9,13 +9,8 @@ import (
 	"path/filepath"
 )
 
-type Config struct {
-	Port     int    `json:"port"`
-	SitePath string `json:"site_path"`
-}
-
-func loadConfig(logger *slog.Logger) (*Config, error) {
-	// Create our config variable
+func loadConfig(logger slog.Logger) (Config, error) {
+	// Create our application variable
 	config := Config{}
 
 	// Get our paths. Right now we're not worried about cross platform
@@ -24,7 +19,7 @@ func loadConfig(logger *slog.Logger) (*Config, error) {
 	configFilePath := filepath.Join(loveCmsDir, "config.json")
 
 	// load file from json
-	logger.Debug("Loading config file", "path", configFilePath)
+	logger.Debug("Loading application file", "path", configFilePath)
 	configFile, err := os.Open(configFilePath)
 
 	defer func(configFile *os.File) {
@@ -34,40 +29,40 @@ func loadConfig(logger *slog.Logger) (*Config, error) {
 		}
 	}(configFile)
 
-	// if we don't have a config file, create it and return the empty config
+	// if we don't have a application file, create it and return the empty application
 	if errors.Is(err, os.ErrNotExist) {
 		// create our directory if it doesn't exist
 		err := os.MkdirAll(loveCmsDir, os.ModePerm)
 		if err != nil {
-			return nil, err
+			return config, err
 		}
 
-		// create the config file
-		logger.Debug("Creating config file", "path", configFilePath)
+		// create the application file
+		logger.Debug("Creating application file", "path", configFilePath)
 		config.Port = 8143
 		configFile, err = os.Create(configFilePath)
 
 		// throw error if we can't create the file
 		if err != nil {
-			return nil, err
+			return config, err
 		}
 
 		// save file
-		logger.Debug("Saving config file", "path", configFilePath)
+		logger.Debug("Saving application file", "path", configFilePath)
 		encoder := json.NewEncoder(configFile)
 		err = encoder.Encode(config)
 
-		// return our config
-		return &config, err
+		// return our application
+		return config, err
 	}
 
 	// if we have an error, bomb out
 	if err != nil {
-		logger.Error("Error loading config file", "path", configFilePath, "error", err)
-		return nil, err
+		logger.Error("Error loading application file", "path", configFilePath, "error", err)
+		return config, err
 	}
 
-	// Parse our config file from disk
+	// Parse our application file from disk
 	decoder := json.NewDecoder(configFile)
 	err = decoder.Decode(&config)
 
@@ -75,13 +70,13 @@ func loadConfig(logger *slog.Logger) (*Config, error) {
 	if config.Port == 0 {
 		config.Port = 8143
 	}
-	return &config, err
+	return config, err
 }
 
-func MustLoadConfig(logger *slog.Logger) *Config {
+func MustLoadConfig(logger slog.Logger) Config {
 	cfg, err := loadConfig(logger)
 	if err != nil {
-		logger.Error("Error loading config file", "error", err)
+		logger.Error("Error loading application file", "error", err)
 		panic(err)
 	}
 	return cfg

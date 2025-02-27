@@ -1,17 +1,17 @@
 package handlers
 
 import (
-	"github.com/jaredhaight/lovecms/internal"
+	"github.com/jaredhaight/lovecms/internal/application"
 	"log/slog"
 	"net/http"
 )
 
 type SetupHandler struct {
 	logger *slog.Logger
-	config *internal.Config
+	config *application.Config
 }
 
-func NewSetupHandler(logger slog.Logger, config internal.Config) *SetupHandler {
+func NewSetupHandler(logger slog.Logger, config application.Config) *SetupHandler {
 	return &SetupHandler{
 		logger: &logger,
 		config: &config,

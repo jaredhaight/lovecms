@@ -4,13 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"github.com/dusted-go/logging/prettylog"
-	"github.com/jaredhaight/lovecms/internal"
+	"github.com/jaredhaight/lovecms/internal/application"
 	"github.com/jaredhaight/lovecms/internal/handlers"
 	"log/slog"
 	"net/http"
 )
 
 var debugLogging = flag.Bool("debug", false, "Enable debug logging")
+var ContentFolderName = "content"
 
 func main() {
 	// parse flags
@@ -33,8 +34,8 @@ func main() {
 
 	logger := slog.New(prettylog.NewHandler(opts))
 
-	// load config
-	cfg := internal.MustLoadConfig(logger)
+	// load application
+	cfg := application.MustLoadConfig(*logger)
 
 	// setup our servers
 	mux := http.NewServeMux()
@@ -42,7 +43,8 @@ func main() {
 
 	// setup handlers
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
-	mux.HandleFunc("/", handlers.NewHomeHandler(cfg, logger).ServeHTTP)
+	mux.HandleFunc("/{$}", handlers.NewHomeHandler(cfg, *logger).ServeHTTP)
+	mux.HandleFunc("/post/{$}", handlers.NewPostHandler(cfg, *logger).ServeHTTP)
 
 	// start server
 	logger.Info(fmt.Sprintf("Starting server on http://localhost:%d", cfg.Port))

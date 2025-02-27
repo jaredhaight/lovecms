@@ -24,10 +24,6 @@ templ-watch:
 templ-generate:
 	templ generate
 
-.PHONY: dev
-dev:
-	go build -o C:\temp .\cmd\main.go && air
-
 .PHONY: build
 build:
 	make tailwind-build

@@ -1,0 +1,14 @@
+package templates
+
+import "github.com/jaredhaight/lovecms/internal/posts"
+
+templ Post(post posts.Post) {
+    <div class="flex flex-col prose">
+      <div>
+        <h1>{ post.Title }</h1>
+      </div>
+      <div>
+        { post.Content }
+      </div>
+    </div>
+}
