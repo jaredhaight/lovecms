@@ -1,23 +1,22 @@
 package handlers
 
 import (
-	"github.com/jaredhaight/lovecms/internal/application"
 	"github.com/jaredhaight/lovecms/internal/posts"
 	"github.com/jaredhaight/lovecms/internal/templates"
+	"github.com/spf13/viper"
 	"log/slog"
 	"net/http"
 	"os"
-	"path/filepath"
 )
 
 type PostHandler struct {
-	config application.Config
-	logger slog.Logger
+	config *viper.Viper
+	logger *slog.Logger
 }
 
-func NewPostHandler(config application.Config, logger slog.Logger) *PostHandler {
+func NewPostHandler(viper *viper.Viper, logger *slog.Logger) *PostHandler {
 	return &PostHandler{
-		config: config,
+		config: viper,
 		logger: logger,
 	}
 }
@@ -31,17 +30,8 @@ func (h *PostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Path parameter not found", http.StatusBadRequest)
 		return
 	}
-
-	// if we don't have a site defined, redirect to setup
-	if h.config.SitePath == "" {
-		h.logger.Info("No current site defined. Redirecting to setup")
-		http.Redirect(w, r, "/setup", http.StatusFound)
-	}
-
-	postFullPath := filepath.Join(h.config.SitePath, "content", postPath[0])
-
 	// check if file exists
-	_, err := os.Stat(postFullPath)
+	_, err := os.Stat(postPath[0])
 
 	if err != nil {
 		h.logger.Error("File does not exist", "err", err)
@@ -50,7 +40,7 @@ func (h *PostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Load our posts
-	p, err := posts.GetPost(postFullPath)
+	p, err := posts.GetPost(postPath[0])
 	if err != nil {
 		h.logger.Error("Error loading post", "err", err)
 		http.Error(w, "Error loading post", http.StatusInternalServerError)

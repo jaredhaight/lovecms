@@ -2,6 +2,7 @@ package posts
 
 type Post struct {
 	Title    string
+	FileName string
 	FilePath string
 	Date     string
 	Tags     []string

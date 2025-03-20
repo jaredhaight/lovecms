@@ -8,7 +8,7 @@ templ Post(post posts.Post) {
         <h1>{ post.Title }</h1>
       </div>
       <div>
-        { post.Content }
+        @templ.Raw(post.Content)
       </div>
     </div>
 }

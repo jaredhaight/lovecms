@@ -10,7 +10,7 @@ templ Home(posts []posts.Post) {
             <div class="divider"></div>
         }
         <div class="min-w-96">
-          <h2>{ post.Title }</h2>
+          <h2><a class="" href={ templ.URL("/post?path=" + post.FilePath) }>{ post.Title }</a></h2>
           <p class="text-sm">
           for _, tag := range post.Tags {
             <span class="badge badge-secondary mx-1">{ tag }</span>

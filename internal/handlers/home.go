@@ -1,39 +1,42 @@
 package handlers
 
 import (
-	"github.com/jaredhaight/lovecms/internal/application"
 	"github.com/jaredhaight/lovecms/internal/posts"
 	"github.com/jaredhaight/lovecms/internal/templates"
+	"github.com/spf13/viper"
 	"log/slog"
 	"net/http"
 	"path/filepath"
 )
 
 type HomeHandler struct {
-	config application.Config
-	logger slog.Logger
+	config *viper.Viper
+	logger *slog.Logger
 }
 
-func NewHomeHandler(config application.Config, logger slog.Logger) *HomeHandler {
+func NewHomeHandler(v *viper.Viper, l *slog.Logger) *HomeHandler {
 	return &HomeHandler{
-		config: config,
-		logger: logger,
+		config: v,
+		logger: l,
 	}
 }
 
 func (h *HomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// get sitepath
+	var sitePath = h.config.GetString("sitePath")
+
 	// if we don't have a site defined, redirect to setup
-	if h.config.SitePath == "" {
+	if sitePath == "" {
 		h.logger.Info("No current site defined. Redirecting to setup")
 		http.Redirect(w, r, "/setup", http.StatusFound)
 	}
 
-	contentPath := filepath.Join(h.config.SitePath, "content")
+	contentPath := filepath.Join(sitePath, "content")
 	// Load our posts
 	p, err := posts.GetPosts(contentPath)
 	if err != nil {
 		h.logger.Error("Error loading posts: ", "err", err)
-		http.Error(w, "Error parsing templates", http.StatusInternalServerError)
+		http.Error(w, "Error parsing web", http.StatusInternalServerError)
 		return
 	}
 
