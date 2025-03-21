@@ -1,4 +1,4 @@
-package posts
+package application
 
 import (
 	"bytes"
@@ -70,9 +70,16 @@ func GetPosts(directoryPath string) ([]Post, error) {
 		}
 	}
 
-	// sort posts by date
+	// sort application by date
 	sort.Slice(posts, func(i, j int) bool {
 		return posts[i].Date > posts[j].Date
 	})
 	return posts, nil
+}
+
+func UpdatePost(post Post) error {
+	// update frontmatter
+
+	// save post
+
 }

@@ -1,4 +1,4 @@
-package posts
+package application
 
 type Post struct {
 	Title    string
@@ -7,6 +7,11 @@ type Post struct {
 	Date     string
 	Tags     []string
 	Content  string
+}
+
+type PostUpdate struct {
+	Title   string
+	Content string
 }
 
 type FrontMatter struct {

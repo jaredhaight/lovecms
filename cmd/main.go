@@ -86,8 +86,9 @@ func main() {
 
 	// setup handlers
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
-	mux.HandleFunc("/{$}", handlers.NewHomeHandler(v, logger).ServeHTTP)
-	mux.HandleFunc("/post/{$}", handlers.NewPostHandler(v, logger).ServeHTTP)
+	mux.HandleFunc("GET /{$}", handlers.NewHomeHandler(v, logger).Get)
+	mux.HandleFunc("GET /post/{$}", handlers.NewPostHandler(v, logger).Get)
+	mux.HandleFunc("POST /post/{$}", handlers.NewPostHandler(v, logger).Post)
 
 	// start server
 	logger.Info(fmt.Sprintf("Starting server on http://localhost:%d", port))

@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/jaredhaight/lovecms/internal/posts"
+	"github.com/jaredhaight/lovecms/internal/application"
 	"github.com/jaredhaight/lovecms/internal/templates"
 	"github.com/spf13/viper"
 	"log/slog"
@@ -21,7 +21,7 @@ func NewHomeHandler(v *viper.Viper, l *slog.Logger) *HomeHandler {
 	}
 }
 
-func (h *HomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *HomeHandler) Get(w http.ResponseWriter, r *http.Request) {
 	// get sitepath
 	var sitePath = h.config.GetString("sitePath")
 
@@ -32,10 +32,10 @@ func (h *HomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	contentPath := filepath.Join(sitePath, "content")
-	// Load our posts
-	p, err := posts.GetPosts(contentPath)
+	// Load our application
+	p, err := application.GetPosts(contentPath)
 	if err != nil {
-		h.logger.Error("Error loading posts: ", "err", err)
+		h.logger.Error("Error loading application: ", "err", err)
 		http.Error(w, "Error parsing web", http.StatusInternalServerError)
 		return
 	}
