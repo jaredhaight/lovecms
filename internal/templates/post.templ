@@ -1,17 +1,17 @@
 package templates
 
-import "github.com/jaredhaight/lovecms/internal/posts"
+import "github.com/jaredhaight/lovecms/internal/application"
 
-templ Post(post posts.Post) {
+templ Post(post application.Post) {
     <div class="flex flex-col prose w-1/1">
       <div>
-        <h1 id="title">{ post.Title }</h1>
+        <h1 id="title">{ post.Metadata.Title }</h1>
       </div>
       <div id="editor">
         @templ.Raw(post.Content)
       </div>
       <div>
-        <button>Submit</button>
+        <button class="btn btn-lg float-right">Submit</button>
       </div>
     </div>
 }

@@ -57,9 +57,9 @@ func Home(posts []application.Post) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(post.Title)
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(post.Metadata.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/home.templ`, Line: 13, Col: 88}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/home.templ`, Line: 13, Col: 97}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -69,7 +69,7 @@ func Home(posts []application.Post) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			for _, tag := range post.Tags {
+			for _, tag := range post.Metadata.Tags {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<span class=\"badge badge-secondary mx-1\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -93,9 +93,9 @@ func Home(posts []application.Post) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(post.Date)
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(post.Metadata.Date)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/home.templ`, Line: 21, Col: 40}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/home.templ`, Line: 21, Col: 49}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {

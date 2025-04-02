@@ -5,9 +5,11 @@ import (
 	"errors"
 	"github.com/adrg/frontmatter"
 	"github.com/yuin/goldmark"
+	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 func GetPost(postPath string) (Post, error) {
@@ -19,8 +21,8 @@ func GetPost(postPath string) (Post, error) {
 	}
 
 	// parse front matter
-	frontMatter := FrontMatter{}
-	rest, err := frontmatter.Parse(content, &frontMatter)
+	fm := FrontMatter{}
+	rest, err := frontmatter.Parse(content, &fm)
 	if err != nil {
 
 		return Post{}, err
@@ -36,10 +38,9 @@ func GetPost(postPath string) (Post, error) {
 	}
 
 	post := Post{
-		Title:    frontMatter.Title,
+		Metadata: fm,
+		FileName: filepath.Base(postPath),
 		FilePath: postPath,
-		Date:     frontMatter.Date,
-		Tags:     frontMatter.Tags,
 		Content:  buf.String(),
 	}
 
@@ -72,14 +73,30 @@ func GetPosts(directoryPath string) ([]Post, error) {
 
 	// sort application by date
 	sort.Slice(posts, func(i, j int) bool {
-		return posts[i].Date > posts[j].Date
+		return posts[i].Metadata.Date > posts[j].Metadata.Date
 	})
 	return posts, nil
 }
 
 func UpdatePost(post Post) error {
-	// update frontmatter
+	// get frontmatter
+	meta, err := yaml.Marshal(post.Metadata)
+	if err != nil {
+		return err
+	}
 
-	// save post
+	// create file content
+	sb := strings.Builder{}
+	sb.WriteString("---\n")
+	sb.WriteString(string(meta))
+	sb.WriteString("---\n")
+	sb.WriteString(post.Content)
 
+	// write content to disk
+	err = os.WriteFile(post.FilePath, []byte(sb.String()), 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

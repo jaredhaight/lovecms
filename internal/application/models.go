@@ -1,17 +1,10 @@
 package application
 
 type Post struct {
-	Title    string
 	FileName string
 	FilePath string
-	Date     string
-	Tags     []string
+	Metadata FrontMatter
 	Content  string
-}
-
-type PostUpdate struct {
-	Title   string
-	Content string
 }
 
 type FrontMatter struct {
