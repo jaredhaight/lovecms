@@ -16,7 +16,6 @@ import (
 )
 
 var debugLogging = flag.Bool("debug", false, "Enable debug logging")
-var sitePath = flag.String("site", "", "Path to the site directory")
 
 // Get our paths - cross platform
 func getConfigDir() string {
@@ -80,29 +79,6 @@ func main() {
 	}
 
 	var port = v.GetInt("Port")
-
-	// get sitepath
-	sitePathConfig := v.GetString("SitePath")
-
-	// Use command line flag if provided, otherwise use config
-	var finalSitePath string
-	if *sitePath != "" {
-		finalSitePath = *sitePath
-		// Update config with the provided path
-		v.Set("SitePath", finalSitePath)
-		err = v.SafeWriteConfig()
-		if err != nil {
-			// If SafeWriteConfig fails, try WriteConfigAs
-			configPath := filepath.Join(loveCmsDir, "config.json")
-			err = v.WriteConfigAs(configPath)
-			if err != nil {
-				logger.Error(err.Error())
-				os.Exit(1)
-			}
-		}
-	} else {
-		finalSitePath = sitePathConfig
-	}
 
 	// setup our servers
 	mux := http.NewServeMux()
