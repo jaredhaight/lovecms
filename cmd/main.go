@@ -4,39 +4,54 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/aerogu/tvchooser"
-	"github.com/dusted-go/logging/prettylog"
-	"github.com/jaredhaight/lovecms/internal/handlers"
-	"github.com/spf13/viper"
 	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
+
+	"github.com/charmbracelet/log"
+	"github.com/jaredhaight/lovecms/internal/handlers"
+	"github.com/spf13/viper"
 )
 
 var debugLogging = flag.Bool("debug", false, "Enable debug logging")
+var sitePath = flag.String("site", "", "Path to the site directory")
 
-// Get our paths. Right now we're not worried about cross platform
-var appDataDir = os.Getenv("APPDATA")
-var loveCmsDir = filepath.Join(appDataDir, "lovecms")
+// Get our paths - cross platform
+func getConfigDir() string {
+	if runtime.GOOS == "windows" {
+		return filepath.Join(os.Getenv("APPDATA"), "lovecms")
+	}
+	// For macOS/Linux, use home directory
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "."
+	}
+	return filepath.Join(homeDir, ".lovecms")
+}
+
+var loveCmsDir = getConfigDir()
 
 func main() {
+	flag.Parse()
+
 	// logging defaults
-	logLevel := slog.LevelInfo
+	logLevel := log.InfoLevel
 	addSource := false
 
 	if *debugLogging {
-		logLevel = slog.LevelDebug
+		logLevel = log.DebugLevel
 		addSource = true
 	}
 
 	// setup logging
-	opts := &slog.HandlerOptions{
-		Level:     logLevel,
-		AddSource: addSource,
+	opts := log.Options{
+		Level:        logLevel,
+		ReportCaller: addSource,
 	}
 
-	logger := slog.New(prettylog.NewHandler(opts))
+	logger := slog.New(log.NewWithOptions(os.Stderr, opts))
 
 	// make sure our directory exists
 	err := os.MkdirAll(loveCmsDir, os.ModePerm)
@@ -57,7 +72,7 @@ func main() {
 	err = v.ReadInConfig()
 	if errors.Is(err, viper.ConfigFileNotFoundError{}) {
 		// if we can't find a config file, create it
-		err = viper.WriteConfig()
+		err = v.SafeWriteConfig()
 		if err != nil {
 			logger.Error(err.Error())
 			os.Exit(1)
@@ -67,17 +82,26 @@ func main() {
 	var port = v.GetInt("Port")
 
 	// get sitepath
-	sitePath := v.GetString("SitePath")
+	sitePathConfig := v.GetString("SitePath")
 
-	// prompt for a site directory if we don't have one
-	if sitePath == "" {
-		sitePath = tvchooser.DirectoryChooser(nil, false)
-		v.Set("SitePath", sitePath)
-		err = v.WriteConfig()
+	// Use command line flag if provided, otherwise use config
+	var finalSitePath string
+	if *sitePath != "" {
+		finalSitePath = *sitePath
+		// Update config with the provided path
+		v.Set("SitePath", finalSitePath)
+		err = v.SafeWriteConfig()
 		if err != nil {
-			logger.Error(err.Error())
-			os.Exit(1)
+			// If SafeWriteConfig fails, try WriteConfigAs
+			configPath := filepath.Join(loveCmsDir, "config.json")
+			err = v.WriteConfigAs(configPath)
+			if err != nil {
+				logger.Error(err.Error())
+				os.Exit(1)
+			}
 		}
+	} else {
+		finalSitePath = sitePathConfig
 	}
 
 	// setup our servers
@@ -87,8 +111,10 @@ func main() {
 	// setup handlers
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 	mux.HandleFunc("GET /{$}", handlers.NewHomeHandler(v, logger).Get)
-	mux.HandleFunc("GET /post/{$}", handlers.NewPostHandler(v, logger).Get)
-	mux.HandleFunc("POST /post/{$}", handlers.NewPostHandler(v, logger).Post)
+	mux.HandleFunc("GET /post", handlers.NewPostHandler(v, logger).Get)
+	mux.HandleFunc("GET /posts/new", handlers.NewPostHandler(v, logger).GetNew)
+	mux.HandleFunc("POST /posts/new", handlers.NewPostHandler(v, logger).PostNew)
+	mux.HandleFunc("POST /posts/edit", handlers.NewPostHandler(v, logger).PostEdit)
 
 	// start server
 	logger.Info(fmt.Sprintf("Starting server on http://localhost:%d", port))

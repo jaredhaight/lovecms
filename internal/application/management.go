@@ -3,13 +3,14 @@ package application
 import (
 	"bytes"
 	"errors"
-	"github.com/adrg/frontmatter"
-	"github.com/yuin/goldmark"
-	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/adrg/frontmatter"
+	"github.com/yuin/goldmark"
+	"gopkg.in/yaml.v3"
 )
 
 func GetPost(postPath string) (Post, error) {
@@ -99,4 +100,31 @@ func UpdatePost(post Post) error {
 	}
 
 	return nil
+}
+
+func CreatePost(contentPath string, post Post) error {
+	// Generate filename from title if slug is empty
+	var filename string
+	if post.Metadata.Slug != "" {
+		filename = post.Metadata.Slug + ".md"
+	} else {
+		// Simple slug generation from title
+		slug := strings.ToLower(post.Metadata.Title)
+		slug = strings.ReplaceAll(slug, " ", "-")
+		// Remove special characters (basic implementation)
+		slug = strings.Map(func(r rune) rune {
+			if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
+				return r
+			}
+			return -1
+		}, slug)
+		filename = slug + ".md"
+		post.Metadata.Slug = slug
+	}
+
+	// Set the file path
+	post.FilePath = filepath.Join(contentPath, filename)
+
+	// Use UpdatePost to write the file
+	return UpdatePost(post)
 }

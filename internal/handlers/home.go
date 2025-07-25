@@ -1,12 +1,13 @@
 package handlers
 
 import (
-	"github.com/jaredhaight/lovecms/internal/application"
-	"github.com/jaredhaight/lovecms/internal/templates"
-	"github.com/spf13/viper"
 	"log/slog"
 	"net/http"
 	"path/filepath"
+
+	"github.com/jaredhaight/lovecms/internal/application"
+	"github.com/jaredhaight/lovecms/internal/templates"
+	"github.com/spf13/viper"
 )
 
 type HomeHandler struct {
@@ -23,7 +24,7 @@ func NewHomeHandler(v *viper.Viper, l *slog.Logger) *HomeHandler {
 
 func (h *HomeHandler) Get(w http.ResponseWriter, r *http.Request) {
 	// get sitepath
-	var sitePath = h.config.GetString("sitePath")
+	var sitePath = h.config.GetString("SitePath")
 
 	// if we don't have a site defined, redirect to setup
 	if sitePath == "" {

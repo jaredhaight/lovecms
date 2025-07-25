@@ -1,3 +1,7 @@
 @import "tailwindcss" source("../../internal/templates/*.{templ,html,js}");
 @plugin "@tailwindcss/typography";
 @plugin "daisyui";
+
+a {
+    @apply no-underline;
+}
