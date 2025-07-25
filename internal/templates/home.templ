@@ -5,6 +5,13 @@ import "github.com/jaredhaight/lovecms/internal/application"
 templ Home(posts []application.Post) {
     {{ var i = 0 }}
     <div class="flex-row prose">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="m-0 p-0">Posts</h1>
+            <button class="btn btn-soft btn-primary">
+                <a href="/posts/new">Create New Post</a>
+            </button>
+        </div>
+        
         for _, post := range posts {
         if i != 0 {
             <div class="divider"></div>

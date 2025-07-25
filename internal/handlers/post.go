@@ -1,15 +1,15 @@
 package handlers
 
 import (
-	"encoding/json"
-	htmltomarkdown "github.com/JohannesKaufmann/html-to-markdown/v2"
+	"log/slog"
+	"net/http"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"github.com/jaredhaight/lovecms/internal/application"
 	"github.com/jaredhaight/lovecms/internal/templates"
 	"github.com/spf13/viper"
-	"io"
-	"log/slog"
-	"net/http"
-	"os"
 )
 
 type PostHandler struct {
@@ -17,110 +17,199 @@ type PostHandler struct {
 	logger *slog.Logger
 }
 
-func NewPostHandler(viper *viper.Viper, logger *slog.Logger) *PostHandler {
+func NewPostHandler(v *viper.Viper, l *slog.Logger) *PostHandler {
 	return &PostHandler{
-		config: viper,
-		logger: logger,
+		config: v,
+		logger: l,
 	}
 }
 
-func (h *PostHandler) Get(w http.ResponseWriter, r *http.Request) {
-	// get our post path
-	postPath, ok := r.URL.Query()["path"]
+func (h *PostHandler) GetNew(w http.ResponseWriter, r *http.Request) {
+	// get sitepath
+	var sitePath = h.config.GetString("SitePath")
 
-	if !ok || postPath[0] == "" {
-		h.logger.Error("Path parameter not found")
-		http.Error(w, "Path parameter not found", http.StatusBadRequest)
-		return
-	}
-	// check if file exists
-	_, err := os.Stat(postPath[0])
-
-	if err != nil {
-		h.logger.Error("File does not exist", "err", err)
-		http.Error(w, "File does not exist", http.StatusInternalServerError)
+	// if we don't have a site defined, redirect to setup
+	if sitePath == "" {
+		h.logger.Info("No current site defined. Redirecting to setup")
+		http.Redirect(w, r, "/setup", http.StatusFound)
 		return
 	}
 
-	// Load our application
-	p, err := application.GetPost(postPath[0])
-	if err != nil {
-		h.logger.Error("Error loading post", "err", err)
-		http.Error(w, "Error loading post", http.StatusInternalServerError)
-		return
+	// Create an empty post for the form
+	post := application.Post{
+		Metadata: application.FrontMatter{
+			Title:       "",
+			Date:        time.Now().Format("2006-01-02T15:04:05Z07:00"),
+			Draft:       true,
+			PublishDate: time.Now().Format("2006-01-02T15:04:05Z07:00"),
+			Tags:        []string{},
+		},
+		Content: "",
 	}
 
-	c := templates.Post(p)
-	err = templates.Layout(c).Render(r.Context(), w)
+	c := templates.PostForm(post, false)
+	err := templates.Layout(c).Render(r.Context(), w)
 
 	if err != nil {
-		h.logger.Error("Error rendering template", "err", err)
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *PostHandler) Post(w http.ResponseWriter, r *http.Request) {
-	// validate post path
-	postPath, ok := r.URL.Query()["path"]
+func (h *PostHandler) PostNew(w http.ResponseWriter, r *http.Request) {
+	// get sitepath
+	var sitePath = h.config.GetString("SitePath")
 
-	if !ok || postPath[0] == "" {
-		h.logger.Error("Path parameter not found")
-		http.Error(w, "Path parameter not found", http.StatusBadRequest)
+	// if we don't have a site defined, redirect to setup
+	if sitePath == "" {
+		h.logger.Info("No current site defined. Redirecting to setup")
+		http.Redirect(w, r, "/setup", http.StatusFound)
 		return
 	}
 
-	// check if file exists
-	_, err := os.Stat(postPath[0])
-
+	// Parse form data
+	err := r.ParseForm()
 	if err != nil {
-		h.logger.Error("File does not exist", "err", err)
-		http.Error(w, "File does not exist", http.StatusInternalServerError)
+		h.logger.Error("Error parsing form", "err", err)
+		http.Error(w, "Error parsing form", http.StatusBadRequest)
 		return
 	}
 
-	p, err := application.GetPost(postPath[0])
+	title := r.FormValue("title")
+	content := r.FormValue("content")
+	slug := r.FormValue("slug")
+	tags := r.FormValue("tags")
+
+	// Parse tags (comma-separated)
+	var tagList []string
+	if tags != "" {
+		for _, tag := range strings.Split(tags, ",") {
+			tagList = append(tagList, strings.TrimSpace(tag))
+		}
+	}
+
+	// Create post
+	post := application.Post{
+		Metadata: application.FrontMatter{
+			Title:       title,
+			Date:        time.Now().Format("2006-01-02T15:04:05Z07:00"),
+			Draft:       r.FormValue("draft") == "on",
+			PublishDate: time.Now().Format("2006-01-02T15:04:05Z07:00"),
+			Slug:        slug,
+			Tags:        tagList,
+		},
+		Content: content,
+	}
+
+	// Create the post file
+	contentPath := filepath.Join(sitePath, "content")
+	err = application.CreatePost(contentPath, post)
+	if err != nil {
+		h.logger.Error("Error creating post", "err", err)
+		http.Error(w, "Error creating post", http.StatusInternalServerError)
+		return
+	}
+
+	// Redirect to home page
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (h *PostHandler) Get(w http.ResponseWriter, r *http.Request) {
+	postPath := r.URL.Query().Get("path")
+	if postPath == "" {
+		http.Error(w, "Post path required", http.StatusBadRequest)
+		return
+	}
+
+	post, err := application.GetPost(postPath)
 	if err != nil {
 		h.logger.Error("Error loading post", "err", err)
 		http.Error(w, "Error loading post", http.StatusInternalServerError)
 		return
 	}
 
-	// get content from body
-	body, err := io.ReadAll(r.Body)
+	c := templates.Post(post)
+	err = templates.Layout(c).Render(r.Context(), w)
+
 	if err != nil {
-		h.logger.Error("Error reading request body", "err", err)
-		http.Error(w, "Error reading request body", http.StatusBadRequest)
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *PostHandler) PostEdit(w http.ResponseWriter, r *http.Request) {
+	postPath := r.URL.Query().Get("path")
+	if postPath == "" {
+		http.Error(w, "Post path required", http.StatusBadRequest)
 		return
 	}
 
-	// Unmarshal the JSON data
-	var pu application.PostUpdate
-	err = json.Unmarshal(body, &pu)
+	// Parse form data
+	err := r.ParseForm()
 	if err != nil {
-		http.Error(w, "Error parsing Post update", http.StatusBadRequest)
+		h.logger.Error("Error parsing form", "err", err)
+		http.Error(w, "Error parsing form", http.StatusBadRequest)
 		return
 	}
 
-	// convert html to markdown
-	md, err := htmltomarkdown.ConvertString(pu.Content)
+	// Load the existing post to get current data
+	existingPost, err := application.GetPost(postPath)
 	if err != nil {
-		http.Error(w, "Error parsing Post update", http.StatusBadRequest)
+		h.logger.Error("Error loading existing post", "err", err)
+		http.Error(w, "Error loading post", http.StatusInternalServerError)
 		return
 	}
 
-	// update post
-	p.Title = pu.Title
-	p.Content = md
+	// Extract form values
+	title := r.FormValue("title")
+	content := r.FormValue("content")
+	slug := r.FormValue("slug")
+	tags := r.FormValue("tags")
+	date := r.FormValue("date")
+	lastmod := r.FormValue("lastmod")
 
-	// save post
-	err = application.UpdatePost(p)
+	// Parse tags (comma-separated)
+	var tagList []string
+	if tags != "" {
+		for _, tag := range strings.Split(tags, ",") {
+			tagList = append(tagList, strings.TrimSpace(tag))
+		}
+	}
+
+	// Set last modified to current time if not provided
+	if lastmod == "" {
+		lastmod = time.Now().Format("2006-01-02T15:04:05Z07:00")
+	}
+
+	// Use existing date if not provided
+	if date == "" {
+		date = existingPost.Metadata.Date
+	}
+
+	// Create updated post
+	updatedPost := application.Post{
+		FilePath: postPath,
+		FileName: existingPost.FileName,
+		Metadata: application.FrontMatter{
+			Title:        title,
+			Date:         date,
+			Draft:        r.FormValue("draft") == "on",
+			LastModified: lastmod,
+			PublishDate:  existingPost.Metadata.PublishDate, // Keep original publish date
+			Slug:         slug,
+			Tags:         tagList,
+		},
+		Content: content,
+	}
+
+	// Update the post
+	err = application.UpdatePost(updatedPost)
 	if err != nil {
 		h.logger.Error("Error updating post", "err", err)
 		http.Error(w, "Error updating post", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	return
+	// Redirect back to the post view
+	http.Redirect(w, r, "/post?path="+postPath, http.StatusSeeOther)
 }
