@@ -1,9 +1,9 @@
 package templates
 
-import "github.com/jaredhaight/lovecms/internal/application"
+import "github.com/jaredhaight/lovecms/internal/types"
 import "strings"
 
-templ PostForm(post application.Post, isEdit bool) {
+templ Editor(post types.Post, isEdit bool) {
     <div class="flex flex-col prose w-full max-w-4xl mx-auto">
         <div class="mb-6">
             if isEdit {

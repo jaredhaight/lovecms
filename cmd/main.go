@@ -11,7 +11,7 @@ import (
 	"runtime"
 
 	"github.com/charmbracelet/log"
-	"github.com/jaredhaight/lovecms/internal/handlers"
+	"github.com/jaredhaight/lovecms/internal/application"
 	"github.com/spf13/viper"
 )
 
@@ -86,11 +86,9 @@ func main() {
 
 	// setup handlers
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
-	mux.HandleFunc("GET /{$}", handlers.NewHomeHandler(v, logger).Get)
-	mux.HandleFunc("GET /post", handlers.NewPostHandler(v, logger).Get)
-	mux.HandleFunc("GET /posts/new", handlers.NewPostHandler(v, logger).GetNew)
-	mux.HandleFunc("POST /posts/new", handlers.NewPostHandler(v, logger).PostNew)
-	mux.HandleFunc("POST /posts/edit", handlers.NewPostHandler(v, logger).PostEdit)
+	mux.HandleFunc("GET /{$}", application.NewCmsHandler(v, logger).GetHome)
+	mux.HandleFunc("GET /editor", application.NewCmsHandler(v, logger).GetEditor)
+	mux.HandleFunc("POST /editor", application.NewCmsHandler(v, logger).PostEditor)
 
 	// start server
 	logger.Info(fmt.Sprintf("Starting server on http://localhost:%d", port))

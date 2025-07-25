@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/jaredhaight/lovecms/internal/application"
+	"github.com/jaredhaight/lovecms/internal/types"
 )
 
 // CreateTempSite creates a temporary directory structure that mimics a LoveCMS site
@@ -34,7 +35,7 @@ func CreateTempSite(t *testing.T) (siteDir string, cleanup func()) {
 }
 
 // CreateTestPost creates a test post file in the specified directory
-func CreateTestPost(t *testing.T, contentDir, filename string, post application.Post) string {
+func CreateTestPost(t *testing.T, contentDir, filename string, post types.Post) string {
 	t.Helper()
 
 	// Set the file path
@@ -53,9 +54,9 @@ func CreateTestPost(t *testing.T, contentDir, filename string, post application.
 func CreateSamplePosts(t *testing.T, contentDir string) []string {
 	t.Helper()
 
-	posts := []application.Post{
+	posts := []types.Post{
 		{
-			Metadata: application.FrontMatter{
+			Metadata: types.FrontMatter{
 				Title:       "First Test Post",
 				Date:        "2023-01-03T00:00:00Z",
 				Draft:       false,
@@ -66,7 +67,7 @@ func CreateSamplePosts(t *testing.T, contentDir string) []string {
 			Content: "# First Test Post\n\nThis is the content of the first test post.",
 		},
 		{
-			Metadata: application.FrontMatter{
+			Metadata: types.FrontMatter{
 				Title:       "Second Test Post",
 				Date:        "2023-01-02T00:00:00Z",
 				Draft:       false,
@@ -77,7 +78,7 @@ func CreateSamplePosts(t *testing.T, contentDir string) []string {
 			Content: "# Second Test Post\n\nThis is the content of the second test post.",
 		},
 		{
-			Metadata: application.FrontMatter{
+			Metadata: types.FrontMatter{
 				Title:       "Draft Post",
 				Date:        "2023-01-01T00:00:00Z",
 				Draft:       true,
@@ -101,7 +102,7 @@ func CreateSamplePosts(t *testing.T, contentDir string) []string {
 }
 
 // AssertPostEqual compares two posts for equality
-func AssertPostEqual(t *testing.T, got, want application.Post) {
+func AssertPostEqual(t *testing.T, got, want types.Post) {
 	t.Helper()
 
 	if got.Metadata.Title != want.Metadata.Title {
