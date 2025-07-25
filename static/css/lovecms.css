@@ -7,7 +7,6 @@
       "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
-    --color-gray-600: oklch(44.6% 0.03 256.802);
     --spacing: 0.25rem;
     --container-4xl: 56rem;
     --text-sm: 0.875rem;
@@ -1114,15 +1113,6 @@
       margin-bottom: 0;
     }
   }
-  .mr-2 {
-    margin-right: calc(var(--spacing) * 2);
-  }
-  .mb-2 {
-    margin-bottom: calc(var(--spacing) * 2);
-  }
-  .mb-4 {
-    margin-bottom: calc(var(--spacing) * 4);
-  }
   .mb-6 {
     margin-bottom: calc(var(--spacing) * 6);
   }
@@ -1207,17 +1197,8 @@
   .flex {
     display: flex;
   }
-  .grid {
-    display: grid;
-  }
-  .h-4 {
-    height: calc(var(--spacing) * 4);
-  }
   .h-96 {
     height: calc(var(--spacing) * 96);
-  }
-  .w-4 {
-    width: calc(var(--spacing) * 4);
   }
   .w-full {
     width: 100%;
@@ -1225,20 +1206,11 @@
   .max-w-4xl {
     max-width: var(--container-4xl);
   }
-  .max-w-none {
-    max-width: none;
-  }
   .min-w-96 {
     min-width: calc(var(--spacing) * 96);
   }
-  .flex-1 {
-    flex: 1;
-  }
   .cursor-pointer {
     cursor: pointer;
-  }
-  .grid-cols-1 {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
   }
   .flex-col {
     flex-direction: column;
@@ -1246,14 +1218,8 @@
   .flex-row {
     flex-direction: row;
   }
-  .flex-wrap {
-    flex-wrap: wrap;
-  }
   .items-center {
     align-items: center;
-  }
-  .items-start {
-    align-items: flex-start;
   }
   .justify-between {
     justify-content: space-between;
@@ -1263,9 +1229,6 @@
   }
   .justify-start {
     justify-content: flex-start;
-  }
-  .gap-2 {
-    gap: calc(var(--spacing) * 2);
   }
   .gap-4 {
     gap: calc(var(--spacing) * 4);
@@ -1296,30 +1259,6 @@
   .text-xl {
     font-size: var(--text-xl);
     line-height: var(--tw-leading, var(--text-xl--line-height));
-  }
-  .text-gray-600 {
-    color: var(--color-gray-600);
-  }
-  .btn-ghost {
-    &:not(.btn-active, :hover, :active:focus, :focus-visible) {
-      --btn-shadow: "";
-      --btn-bg: #0000;
-      --btn-border: #0000;
-      --btn-noise: none;
-      &:not(:disabled, [disabled], .btn-disabled) {
-        outline-color: currentColor;
-        --btn-fg: currentColor;
-      }
-    }
-    @media (hover: none) {
-      &:hover:not(.btn-active, :active, :focus-visible, :disabled, [disabled], .btn-disabled) {
-        --btn-shadow: "";
-        --btn-bg: #0000;
-        --btn-border: #0000;
-        --btn-noise: none;
-        --btn-fg: currentColor;
-      }
-    }
   }
   .btn-soft {
     &:not(.btn-active, :hover, :active:focus, :focus-visible, :disabled, [disabled], .btn-disabled) {
@@ -1371,14 +1310,6 @@
     --badge-color: var(--color-secondary);
     --badge-fg: var(--color-secondary-content);
   }
-  .badge-success {
-    --badge-color: var(--color-success);
-    --badge-fg: var(--color-success-content);
-  }
-  .badge-warning {
-    --badge-color: var(--color-warning);
-    --badge-fg: var(--color-warning-content);
-  }
   .btn-primary {
     --btn-color: var(--color-primary);
     --btn-fg: var(--color-primary-content);
@@ -1386,11 +1317,6 @@
   .btn-secondary {
     --btn-color: var(--color-secondary);
     --btn-fg: var(--color-secondary-content);
-  }
-  .md\:grid-cols-2 {
-    @media (width >= 48rem) {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
   }
   .md\:px-20 {
     @media (width >= 48rem) {

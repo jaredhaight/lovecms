@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/jaredhaight/lovecms/internal/types"
 )
 
 // Benchmark tests for performance-critical functions
@@ -61,9 +63,9 @@ func BenchmarkUpdatePost(b *testing.B) {
 	}
 	defer os.RemoveAll(tempDir)
 
-	post := Post{
+	post := types.Post{
 		FilePath: filepath.Join(tempDir, "benchmark.md"),
-		Metadata: FrontMatter{
+		Metadata: types.FrontMatter{
 			Title: "Benchmark Post",
 			Date:  "2023-01-01T00:00:00Z",
 			Draft: false,
@@ -92,8 +94,8 @@ func BenchmarkCreatePost(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		post := Post{
-			Metadata: FrontMatter{
+		post := types.Post{
+			Metadata: types.FrontMatter{
 				Title: fmt.Sprintf("Benchmark Post %d", i),
 				Date:  "2023-01-01T00:00:00Z",
 				Draft: false,

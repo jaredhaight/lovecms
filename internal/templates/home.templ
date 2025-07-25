@@ -1,14 +1,14 @@
 package templates
 
-import "github.com/jaredhaight/lovecms/internal/application"
+import "github.com/jaredhaight/lovecms/internal/types"
 
-templ Home(posts []application.Post) {
+templ Home(posts []types.Post) {
     {{ var i = 0 }}
     <div class="flex-row prose">
         <div class="flex justify-between items-center mb-6">
             <h1 class="m-0 p-0">Posts</h1>
             <button class="btn btn-soft btn-primary">
-                <a href="/posts/new">Create New Post</a>
+                <a href="/editor/">Create New Post</a>
             </button>
         </div>
         
@@ -17,7 +17,7 @@ templ Home(posts []application.Post) {
             <div class="divider"></div>
         }
         <div class="min-w-96">
-          <h2><a class="" href={ templ.URL("/post?path=" + post.FilePath) }>{ post.Metadata.Title }</a></h2>
+          <h2><a class="" href={ templ.URL("/editor/?path=" + post.FilePath) }>{ post.Metadata.Title }</a></h2>
           <p class="text-sm">
           for _, tag := range post.Metadata.Tags {
             <span class="badge badge-secondary mx-1">{ tag }</span>

@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/jaredhaight/lovecms/internal/types"
 )
 
 func TestGetPosts(t *testing.T) {
@@ -152,14 +154,14 @@ func TestUpdatePost(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		post    Post
+		post    types.Post
 		wantErr bool
 	}{
 		{
 			name: "valid post",
-			post: Post{
+			post: types.Post{
 				FilePath: filepath.Join(tempDir, "test.md"),
-				Metadata: FrontMatter{
+				Metadata: types.FrontMatter{
 					Title: "Test Post",
 					Date:  "2023-01-01T00:00:00Z",
 					Draft: false,
@@ -171,9 +173,9 @@ func TestUpdatePost(t *testing.T) {
 		},
 		{
 			name: "post with invalid file path",
-			post: Post{
+			post: types.Post{
 				FilePath: "/invalid/path/that/does/not/exist/test.md",
-				Metadata: FrontMatter{
+				Metadata: types.FrontMatter{
 					Title: "Invalid Post",
 				},
 				Content: "Content",
@@ -223,15 +225,15 @@ func TestCreatePost(t *testing.T) {
 	tests := []struct {
 		name         string
 		contentPath  string
-		post         Post
+		post         types.Post
 		wantErr      bool
 		wantFilename string
 	}{
 		{
 			name:        "post with custom slug",
 			contentPath: tempDir,
-			post: Post{
-				Metadata: FrontMatter{
+			post: types.Post{
+				Metadata: types.FrontMatter{
 					Title: "Custom Slug Post",
 					Slug:  "custom-slug",
 				},
@@ -243,8 +245,8 @@ func TestCreatePost(t *testing.T) {
 		{
 			name:        "post without slug - auto generate",
 			contentPath: tempDir,
-			post: Post{
-				Metadata: FrontMatter{
+			post: types.Post{
+				Metadata: types.FrontMatter{
 					Title: "Auto Generated Slug Post",
 				},
 				Content: "Content with auto-generated slug",
@@ -255,8 +257,8 @@ func TestCreatePost(t *testing.T) {
 		{
 			name:        "post with special characters in title",
 			contentPath: tempDir,
-			post: Post{
-				Metadata: FrontMatter{
+			post: types.Post{
+				Metadata: types.FrontMatter{
 					Title: "Post With Special Characters!@#$%",
 				},
 				Content: "Content with special chars",
@@ -267,8 +269,8 @@ func TestCreatePost(t *testing.T) {
 		{
 			name:        "invalid content path",
 			contentPath: "/invalid/path",
-			post: Post{
-				Metadata: FrontMatter{
+			post: types.Post{
+				Metadata: types.FrontMatter{
 					Title: "Invalid Path Post",
 				},
 				Content: "Content",
@@ -320,8 +322,8 @@ func TestCreatePost_SlugGeneration(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.title, func(t *testing.T) {
-			post := Post{
-				Metadata: FrontMatter{
+			post := types.Post{
+				Metadata: types.FrontMatter{
 					Title: tt.title,
 				},
 				Content: "Test content",
