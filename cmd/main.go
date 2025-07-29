@@ -87,8 +87,8 @@ func main() {
 	// setup handlers
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 	mux.HandleFunc("GET /{$}", application.NewCmsHandler(v, logger).GetHome)
-	mux.HandleFunc("GET /editor", application.NewCmsHandler(v, logger).GetEditor)
-	mux.HandleFunc("POST /editor", application.NewCmsHandler(v, logger).PostEditor)
+	mux.HandleFunc("GET /editor/", application.NewCmsHandler(v, logger).GetEditor)
+	mux.HandleFunc("POST /editor/", application.NewCmsHandler(v, logger).PostEditor)
 
 	// start server
 	logger.Info(fmt.Sprintf("Starting server on http://localhost:%d", port))

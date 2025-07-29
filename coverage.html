@@ -55,25 +55,19 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">github.com/jaredhaight/lovecms/cmd/main.go (6.5%)</option>
+				<option value="file0">github.com/jaredhaight/lovecms/cmd/main.go (9.8%)</option>
 				
-				<option value="file1">github.com/jaredhaight/lovecms/internal/application/directory_picker.go (63.9%)</option>
+				<option value="file1">github.com/jaredhaight/lovecms/internal/application/cms.go (86.8%)</option>
 				
-				<option value="file2">github.com/jaredhaight/lovecms/internal/application/management.go (92.7%)</option>
+				<option value="file2">github.com/jaredhaight/lovecms/internal/application/management.go (93.0%)</option>
 				
-				<option value="file3">github.com/jaredhaight/lovecms/internal/handlers/home.go (87.5%)</option>
+				<option value="file3">github.com/jaredhaight/lovecms/internal/templates/editor_templ.go (0.0%)</option>
 				
-				<option value="file4">github.com/jaredhaight/lovecms/internal/handlers/post.go (86.5%)</option>
+				<option value="file4">github.com/jaredhaight/lovecms/internal/templates/home_templ.go (0.0%)</option>
 				
-				<option value="file5">github.com/jaredhaight/lovecms/internal/templates/home_templ.go (0.0%)</option>
+				<option value="file5">github.com/jaredhaight/lovecms/internal/templates/layout_templ.go (0.0%)</option>
 				
-				<option value="file6">github.com/jaredhaight/lovecms/internal/templates/layout_templ.go (0.0%)</option>
-				
-				<option value="file7">github.com/jaredhaight/lovecms/internal/templates/post_form_templ.go (0.0%)</option>
-				
-				<option value="file8">github.com/jaredhaight/lovecms/internal/templates/post_templ.go (0.0%)</option>
-				
-				<option value="file9">github.com/jaredhaight/lovecms/internal/testhelpers/helpers.go (0.0%)</option>
+				<option value="file6">github.com/jaredhaight/lovecms/internal/testhelpers/helpers.go (0.0%)</option>
 				
 				</select>
 			</div>
@@ -108,14 +102,12 @@ import (
         "path/filepath"
         "runtime"
 
-        "github.com/dusted-go/logging/prettylog"
+        "github.com/charmbracelet/log"
         "github.com/jaredhaight/lovecms/internal/application"
-        "github.com/jaredhaight/lovecms/internal/handlers"
         "github.com/spf13/viper"
 )
 
 var debugLogging = flag.Bool("debug", false, "Enable debug logging")
-var sitePath = flag.String("site", "", "Path to the site directory")
 
 // Get our paths - cross platform
 func getConfigDir() string <span class="cov10" title="6">{
@@ -136,21 +128,21 @@ func main() <span class="cov0" title="0">{
         flag.Parse()
 
         // logging defaults
-        logLevel := slog.LevelInfo
+        logLevel := log.InfoLevel
         addSource := false
 
         if *debugLogging </span><span class="cov0" title="0">{
-                logLevel = slog.LevelDebug
+                logLevel = log.DebugLevel
                 addSource = true
         }</span>
 
         // setup logging
-        <span class="cov0" title="0">opts := &amp;slog.HandlerOptions{
-                Level:     logLevel,
-                AddSource: addSource,
+        <span class="cov0" title="0">opts := log.Options{
+                Level:        logLevel,
+                ReportCaller: addSource,
         }
 
-        logger := slog.New(prettylog.NewHandler(opts))
+        logger := slog.New(log.NewWithOptions(os.Stderr, opts))
 
         // make sure our directory exists
         err := os.MkdirAll(loveCmsDir, os.ModePerm)
@@ -180,50 +172,15 @@ func main() <span class="cov0" title="0">{
 
         <span class="cov0" title="0">var port = v.GetInt("Port")
 
-        // get sitepath
-        sitePathConfig := v.GetString("SitePath")
-
-        // Use command line flag if provided, otherwise use config
-        var finalSitePath string
-        if *sitePath != "" </span><span class="cov0" title="0">{
-                finalSitePath = *sitePath
-                // Update config with the provided path
-                v.Set("SitePath", finalSitePath)
-                err = v.SafeWriteConfig()
-                if err != nil </span><span class="cov0" title="0">{
-                        // If SafeWriteConfig fails, try WriteConfigAs
-                        configPath := filepath.Join(loveCmsDir, "config.json")
-                        err = v.WriteConfigAs(configPath)
-                        if err != nil </span><span class="cov0" title="0">{
-                                logger.Error(err.Error())
-                                os.Exit(1)
-                        }</span>
-                }
-        } else<span class="cov0" title="0"> {
-                finalSitePath = sitePathConfig
-        }</span>
-
-        // prompt for a site directory if we don't have one
-        <span class="cov0" title="0">if finalSitePath == "" </span><span class="cov0" title="0">{
-                finalSitePath = application.DirectoryPicker()
-                v.Set("SitePath", finalSitePath)
-                err = v.WriteConfig()
-                if err != nil </span><span class="cov0" title="0">{
-                        logger.Error(err.Error())
-                        os.Exit(1)
-                }</span>
-        }
-
         // setup our servers
-        <span class="cov0" title="0">mux := http.NewServeMux()
+        mux := http.NewServeMux()
         fileServer := http.FileServer(http.Dir("./static"))
 
         // setup handlers
         mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
-        mux.HandleFunc("GET /{$}", handlers.NewHomeHandler(v, logger).Get)
-        mux.HandleFunc("GET /post", handlers.NewPostHandler(v, logger).Get)
-        mux.HandleFunc("GET /posts/new", handlers.NewPostHandler(v, logger).GetNew)
-        mux.HandleFunc("POST /posts/new", handlers.NewPostHandler(v, logger).PostNew)
+        mux.HandleFunc("GET /{$}", application.NewCmsHandler(v, logger).GetHome)
+        mux.HandleFunc("GET /editor", application.NewCmsHandler(v, logger).GetEditor)
+        mux.HandleFunc("POST /editor", application.NewCmsHandler(v, logger).PostEditor)
 
         // start server
         logger.Info(fmt.Sprintf("Starting server on http://localhost:%d", port))
@@ -237,97 +194,168 @@ func main() <span class="cov0" title="0">{
 		<pre class="file" id="file1" style="display: none">package application
 
 import (
-        "errors"
-        "os"
+        "log/slog"
+        "net/http"
+        "path/filepath"
         "strings"
         "time"
 
-        "github.com/charmbracelet/bubbles/filepicker"
-        tea "github.com/charmbracelet/bubbletea"
+        "github.com/jaredhaight/lovecms/internal/templates"
+        "github.com/jaredhaight/lovecms/internal/types"
+        "github.com/spf13/viper"
 )
 
-type model struct {
-        filepicker   filepicker.Model
-        selectedFile string
-        quitting     bool
-        err          error
+type CmsHandler struct {
+        config *viper.Viper
+        logger *slog.Logger
 }
 
-type clearErrorMsg struct{}
-
-func clearErrorAfter(t time.Duration) tea.Cmd <span class="cov1" title="1">{
-        return tea.Tick(t, func(_ time.Time) tea.Msg </span><span class="cov0" title="0">{
-                return clearErrorMsg{}
-        }</span>)
-}
-
-func (m model) Init() tea.Cmd <span class="cov1" title="1">{
-        return m.filepicker.Init()
+func NewCmsHandler(v *viper.Viper, l *slog.Logger) *CmsHandler <span class="cov10" title="12">{
+        return &amp;CmsHandler{
+                config: v,
+                logger: l,
+        }
 }</span>
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) <span class="cov10" title="4">{
-        switch msg := msg.(type) </span>{
-        case tea.KeyMsg:<span class="cov8" title="3">
-                switch msg.String() </span>{
-                case "ctrl+c", "q":<span class="cov5" title="2">
-                        m.quitting = true
-                        return m, tea.Quit</span>
-                }
-        case clearErrorMsg:<span class="cov1" title="1">
-                m.err = nil</span>
-        }
+// GET /
+func (h *CmsHandler) GetHome(w http.ResponseWriter, r *http.Request) <span class="cov3" title="2">{
+        // get sitepath
+        var sitePath = h.config.GetString("SitePath")
 
-        <span class="cov5" title="2">var cmd tea.Cmd
-        m.filepicker, cmd = m.filepicker.Update(msg)
-
-        // Did the user select a file?
-        if didSelect, path := m.filepicker.DidSelectFile(msg); didSelect </span><span class="cov0" title="0">{
-                // Get the path of the selected file.
-                m.selectedFile = path
+        // if we don't have a site defined, redirect to setup
+        if sitePath == "" </span><span class="cov1" title="1">{
+                h.logger.Info("No current site defined. Redirecting to setup")
+                http.Redirect(w, r, "/setup", http.StatusFound)
         }</span>
 
-        // Did the user select a disabled file?
-        // This is only necessary to display an error to the user.
-        <span class="cov5" title="2">if didSelect, path := m.filepicker.DidSelectDisabledFile(msg); didSelect </span><span class="cov0" title="0">{
-                // Let's clear the selectedFile and display an error.
-                m.err = errors.New(path + " is not valid.")
-                m.selectedFile = ""
-                return m, tea.Batch(cmd, clearErrorAfter(2*time.Second))
+        <span class="cov3" title="2">contentPath := filepath.Join(sitePath, "content")
+        // Load our application
+        p, err := GetPosts(contentPath)
+        if err != nil </span><span class="cov1" title="1">{
+                h.logger.Error("Error loading application: ", "err", err)
+                http.Error(w, "Error parsing web", http.StatusInternalServerError)
+                return
         }</span>
 
-        <span class="cov5" title="2">return m, cmd</span>
+        <span class="cov1" title="1">c := templates.Home(p)
+        err = templates.Layout(c).Render(r.Context(), w)
+
+        if err != nil </span><span class="cov0" title="0">{
+                http.Error(w, "Error rendering template", http.StatusInternalServerError)
+                return
+        }</span>
 }
 
-func (m model) View() string <span class="cov10" title="4">{
-        if m.quitting </span><span class="cov1" title="1">{
-                return ""
+// GET /editor/?path=Foo
+func (h *CmsHandler) GetEditor(w http.ResponseWriter, r *http.Request) <span class="cov6" title="5">{
+        // get sitepath
+        var sitePath = h.config.GetString("SitePath")
+
+        // if we don't have a site defined, redirect to setup
+        if sitePath == "" </span><span class="cov1" title="1">{
+                h.logger.Info("No current site defined. Redirecting to setup")
+                http.Redirect(w, r, "/setup", http.StatusFound)
+                return
         }</span>
-        <span class="cov8" title="3">var s strings.Builder
-        s.WriteString("\n  ")
-        if m.err != nil </span><span class="cov1" title="1">{
-                s.WriteString(m.filepicker.Styles.DisabledFile.Render(m.err.Error()))
-        }</span> else<span class="cov5" title="2"> if m.selectedFile == "" </span><span class="cov1" title="1">{
-                s.WriteString("Pick a file:")
-        }</span> else<span class="cov1" title="1"> {
-                s.WriteString("Selected file: " + m.filepicker.Styles.Selected.Render(m.selectedFile))
+
+        // if we're at /post/new, we need to just render the CMS
+        <span class="cov6" title="4">if r.URL.Path == "/post/new" </span><span class="cov1" title="1">{
+                // Create a new post form
+                c := templates.Editor(types.Post{}, false)
+                err := templates.Layout(c).Render(r.Context(), w)
+
+                if err != nil </span><span class="cov0" title="0">{
+                        http.Error(w, "Error rendering template", http.StatusInternalServerError)
+                        return
+                }</span>
+                <span class="cov1" title="1">return</span>
+        }
+
+        // if we're at /post/edit, we need to load the existing post
+        <span class="cov4" title="3">postPath := r.URL.Query().Get("path")
+
+        // if no path is provided, return an error
+        if postPath == "" </span><span class="cov1" title="1">{
+                http.Error(w, "Post path required", http.StatusBadRequest)
+                return
         }</span>
-        <span class="cov8" title="3">s.WriteString("\n\n" + m.filepicker.View() + "\n")
-        return s.String()</span>
+
+        // Load the existing post
+        <span class="cov3" title="2">post, err := GetPost(postPath)
+
+        if err != nil </span><span class="cov1" title="1">{
+                h.logger.Error("Error loading post", "err", err)
+                http.Error(w, "Error loading post", http.StatusInternalServerError)
+                return
+        }</span>
+
+        <span class="cov1" title="1">c := templates.Editor(post, true)
+        err = templates.Layout(c).Render(r.Context(), w)
+
+        if err != nil </span><span class="cov0" title="0">{
+                http.Error(w, "Error rendering template", http.StatusInternalServerError)
+                return
+        }</span>
 }
 
-func DirectoryPicker() string <span class="cov0" title="0">{
-        fp := filepicker.New()
-        fp.DirAllowed = true
-        fp.FileAllowed = false
-        fp.CurrentDirectory, _ = os.UserHomeDir()
+// POST /editor/
+func (h *CmsHandler) PostEditor(w http.ResponseWriter, r *http.Request) <span class="cov6" title="4">{
+        // get sitepath
+        var sitePath = h.config.GetString("SitePath")
 
-        m := model{
-                filepicker: fp,
+        // if we don't have a site defined, redirect to setup
+        if sitePath == "" </span><span class="cov1" title="1">{
+                h.logger.Info("No current site defined. Redirecting to setup")
+                http.Redirect(w, r, "/setup", http.StatusFound)
+                return
+        }</span>
+
+        // Parse form data
+        <span class="cov4" title="3">err := r.ParseForm()
+        if err != nil </span><span class="cov1" title="1">{
+                h.logger.Error("Error parsing form", "err", err)
+                http.Error(w, "Error parsing form", http.StatusBadRequest)
+                return
+        }</span>
+
+        <span class="cov3" title="2">title := r.FormValue("title")
+        content := r.FormValue("content")
+        slug := r.FormValue("slug")
+        tags := r.FormValue("tags")
+
+        // Parse tags (comma-separated)
+        var tagList []string
+        if tags != "" </span><span class="cov3" title="2">{
+                for _, tag := range strings.Split(tags, ",") </span><span class="cov4" title="3">{
+                        tagList = append(tagList, strings.TrimSpace(tag))
+                }</span>
         }
-        tm, _ := tea.NewProgram(&amp;m).Run()
-        mm := tm.(model)
-        return mm.selectedFile
-}</span>
+
+        // Create post
+        <span class="cov3" title="2">post := types.Post{
+                Metadata: types.FrontMatter{
+                        Title:       title,
+                        Date:        time.Now().Format("2006-01-02T15:04:05Z07:00"),
+                        Draft:       r.FormValue("draft") == "on",
+                        PublishDate: time.Now().Format("2006-01-02T15:04:05Z07:00"),
+                        Slug:        slug,
+                        Tags:        tagList,
+                },
+                Content: content,
+        }
+
+        // Create the post file
+        contentPath := filepath.Join(sitePath, "content")
+        err = CreatePost(contentPath, post)
+        if err != nil </span><span class="cov0" title="0">{
+                h.logger.Error("Error creating post", "err", err)
+                http.Error(w, "Error creating post", http.StatusInternalServerError)
+                return
+        }</span>
+
+        // Redirect to home page
+        <span class="cov3" title="2">http.Redirect(w, r, "/", http.StatusSeeOther)</span>
+}
 </pre>
 		
 		<pre class="file" id="file2" style="display: none">package application
@@ -341,36 +369,37 @@ import (
         "strings"
 
         "github.com/adrg/frontmatter"
+        "github.com/jaredhaight/lovecms/internal/types"
         "github.com/yuin/goldmark"
         "gopkg.in/yaml.v3"
 )
 
-func GetPost(postPath string) (Post, error) <span class="cov3" title="4">{
+func GetPost(postPath string) (types.Post, error) <span class="cov4" title="7">{
         // read file contents
         content, err := os.Open(postPath)
 
-        if err != nil </span><span class="cov0" title="0">{
-                return Post{}, err
+        if err != nil </span><span class="cov1" title="1">{
+                return types.Post{}, err
         }</span>
 
         // parse front matter
-        <span class="cov3" title="4">fm := FrontMatter{}
+        <span class="cov4" title="6">fm := types.FrontMatter{}
         rest, err := frontmatter.Parse(content, &amp;fm)
         if err != nil </span><span class="cov0" title="0">{
 
-                return Post{}, err
+                return types.Post{}, err
         }</span>
 
         // Markdown -&gt; HTML
-        <span class="cov3" title="4">var buf bytes.Buffer
+        <span class="cov4" title="6">var buf bytes.Buffer
         md := goldmark.New()
 
         err = md.Convert(rest, &amp;buf)
         if err != nil </span><span class="cov0" title="0">{
-                return Post{}, err
+                return types.Post{}, err
         }</span>
 
-        <span class="cov3" title="4">post := Post{
+        <span class="cov4" title="6">post := types.Post{
                 Metadata: fm,
                 FileName: filepath.Base(postPath),
                 FilePath: postPath,
@@ -380,38 +409,43 @@ func GetPost(postPath string) (Post, error) <span class="cov3" title="4">{
         return post, nil</span>
 }
 
-func GetPosts(directoryPath string) ([]Post, error) <span class="cov3" title="5">{
+func GetPosts(directoryPath string) ([]types.Post, error) <span class="cov4" title="7">{
         if directoryPath == "" </span><span class="cov1" title="1">{
                 return nil, errors.New("directoryPath is empty")
         }</span>
 
         // get files from the content folder
-        <span class="cov3" title="4">entries, err := os.ReadDir(directoryPath)
-        if err != nil </span><span class="cov1" title="1">{
+        <span class="cov4" title="6">entries, err := os.ReadDir(directoryPath)
+        if err != nil </span><span class="cov2" title="2">{
                 return nil, err
         }</span>
 
         // create a post object for each item
-        <span class="cov2" title="3">var post Post
-        var posts []Post
-        for _, entry := range entries </span><span class="cov3" title="5">{
+        <span class="cov3" title="4">var post types.Post
+        var posts []types.Post
+        for _, entry := range entries </span><span class="cov4" title="6">{
                 ext := filepath.Ext(entry.Name())
 
-                if ext == ".md" || ext == ".markdown" </span><span class="cov3" title="4">{
+                if ext == ".md" || ext == ".markdown" </span><span class="cov3" title="5">{
                         postPath := filepath.Join(directoryPath, entry.Name())
                         post, err = GetPost(postPath)
-                        posts = append(posts, post)
-                }</span>
+
+                        if err != nil </span><span class="cov0" title="0">{
+                                return nil, err
+                        }</span>
+
+                        <span class="cov3" title="5">posts = append(posts, post)</span>
+                }
         }
 
         // sort application by date
-        <span class="cov2" title="3">sort.Slice(posts, func(i, j int) bool </span><span class="cov2" title="2">{
+        <span class="cov3" title="4">sort.Slice(posts, func(i, j int) bool </span><span class="cov2" title="2">{
                 return posts[i].Metadata.Date &gt; posts[j].Metadata.Date
         }</span>)
-        <span class="cov2" title="3">return posts, nil</span>
+        <span class="cov3" title="4">return posts, nil</span>
 }
 
-func UpdatePost(post Post) error <span class="cov5" title="12">{
+func UpdatePost(post types.Post) error <span class="cov5" title="14">{
         // get frontmatter
         meta, err := yaml.Marshal(post.Metadata)
         if err != nil </span><span class="cov0" title="0">{
@@ -419,7 +453,7 @@ func UpdatePost(post Post) error <span class="cov5" title="12">{
         }</span>
 
         // create file content
-        <span class="cov5" title="12">sb := strings.Builder{}
+        <span class="cov5" title="14">sb := strings.Builder{}
         sb.WriteString("---\n")
         sb.WriteString(string(meta))
         sb.WriteString("---\n")
@@ -431,13 +465,13 @@ func UpdatePost(post Post) error <span class="cov5" title="12">{
                 return err
         }</span>
 
-        <span class="cov5" title="10">return nil</span>
+        <span class="cov5" title="12">return nil</span>
 }
 
-func CreatePost(contentPath string, post Post) error <span class="cov5" title="10">{
+func CreatePost(contentPath string, post types.Post) error <span class="cov5" title="12">{
         // Generate filename from title if slug is empty
         var filename string
-        if post.Metadata.Slug != "" </span><span class="cov1" title="1">{
+        if post.Metadata.Slug != "" </span><span class="cov2" title="3">{
                 filename = post.Metadata.Slug + ".md"
         }</span> else<span class="cov4" title="9"> {
                 // Simple slug generation from title
@@ -455,207 +489,14 @@ func CreatePost(contentPath string, post Post) error <span class="cov5" title="1
         }
 
         // Set the file path
-        <span class="cov5" title="10">post.FilePath = filepath.Join(contentPath, filename)
+        <span class="cov5" title="12">post.FilePath = filepath.Join(contentPath, filename)
 
         // Use UpdatePost to write the file
         return UpdatePost(post)</span>
 }
 </pre>
 		
-		<pre class="file" id="file3" style="display: none">package handlers
-
-import (
-        "log/slog"
-        "net/http"
-        "path/filepath"
-
-        "github.com/jaredhaight/lovecms/internal/application"
-        "github.com/jaredhaight/lovecms/internal/templates"
-        "github.com/spf13/viper"
-)
-
-type HomeHandler struct {
-        config *viper.Viper
-        logger *slog.Logger
-}
-
-func NewHomeHandler(v *viper.Viper, l *slog.Logger) *HomeHandler <span class="cov10" title="4">{
-        return &amp;HomeHandler{
-                config: v,
-                logger: l,
-        }
-}</span>
-
-func (h *HomeHandler) Get(w http.ResponseWriter, r *http.Request) <span class="cov8" title="3">{
-        // get sitepath
-        var sitePath = h.config.GetString("SitePath")
-
-        // if we don't have a site defined, redirect to setup
-        if sitePath == "" </span><span class="cov1" title="1">{
-                h.logger.Info("No current site defined. Redirecting to setup")
-                http.Redirect(w, r, "/setup", http.StatusFound)
-        }</span>
-
-        <span class="cov8" title="3">contentPath := filepath.Join(sitePath, "content")
-        // Load our application
-        p, err := application.GetPosts(contentPath)
-        if err != nil </span><span class="cov5" title="2">{
-                h.logger.Error("Error loading application: ", "err", err)
-                http.Error(w, "Error parsing web", http.StatusInternalServerError)
-                return
-        }</span>
-
-        <span class="cov1" title="1">c := templates.Home(p)
-        err = templates.Layout(c).Render(r.Context(), w)
-
-        if err != nil </span><span class="cov0" title="0">{
-                http.Error(w, "Error rendering template", http.StatusInternalServerError)
-                return
-        }</span>
-}
-</pre>
-		
-		<pre class="file" id="file4" style="display: none">package handlers
-
-import (
-        "log/slog"
-        "net/http"
-        "path/filepath"
-        "strings"
-        "time"
-
-        "github.com/jaredhaight/lovecms/internal/application"
-        "github.com/jaredhaight/lovecms/internal/templates"
-        "github.com/spf13/viper"
-)
-
-type PostHandler struct {
-        config *viper.Viper
-        logger *slog.Logger
-}
-
-func NewPostHandler(v *viper.Viper, l *slog.Logger) *PostHandler <span class="cov10" title="11">{
-        return &amp;PostHandler{
-                config: v,
-                logger: l,
-        }
-}</span>
-
-func (h *PostHandler) GetNew(w http.ResponseWriter, r *http.Request) <span class="cov3" title="2">{
-        // get sitepath
-        var sitePath = h.config.GetString("SitePath")
-
-        // if we don't have a site defined, redirect to setup
-        if sitePath == "" </span><span class="cov1" title="1">{
-                h.logger.Info("No current site defined. Redirecting to setup")
-                http.Redirect(w, r, "/setup", http.StatusFound)
-                return
-        }</span>
-
-        // Create an empty post for the form
-        <span class="cov1" title="1">post := application.Post{
-                Metadata: application.FrontMatter{
-                        Title:       "",
-                        Date:        time.Now().Format("2006-01-02T15:04:05Z07:00"),
-                        Draft:       true,
-                        PublishDate: time.Now().Format("2006-01-02T15:04:05Z07:00"),
-                        Tags:        []string{},
-                },
-                Content: "",
-        }
-
-        c := templates.PostForm(post, false)
-        err := templates.Layout(c).Render(r.Context(), w)
-
-        if err != nil </span><span class="cov0" title="0">{
-                http.Error(w, "Error rendering template", http.StatusInternalServerError)
-                return
-        }</span>
-}
-
-func (h *PostHandler) PostNew(w http.ResponseWriter, r *http.Request) <span class="cov7" title="5">{
-        // get sitepath
-        var sitePath = h.config.GetString("SitePath")
-
-        // if we don't have a site defined, redirect to setup
-        if sitePath == "" </span><span class="cov1" title="1">{
-                h.logger.Info("No current site defined. Redirecting to setup")
-                http.Redirect(w, r, "/setup", http.StatusFound)
-                return
-        }</span>
-
-        // Parse form data
-        <span class="cov6" title="4">err := r.ParseForm()
-        if err != nil </span><span class="cov1" title="1">{
-                h.logger.Error("Error parsing form", "err", err)
-                http.Error(w, "Error parsing form", http.StatusBadRequest)
-                return
-        }</span>
-
-        <span class="cov5" title="3">title := r.FormValue("title")
-        content := r.FormValue("content")
-        slug := r.FormValue("slug")
-        tags := r.FormValue("tags")
-
-        // Parse tags (comma-separated)
-        var tagList []string
-        if tags != "" </span><span class="cov3" title="2">{
-                for _, tag := range strings.Split(tags, ",") </span><span class="cov5" title="3">{
-                        tagList = append(tagList, strings.TrimSpace(tag))
-                }</span>
-        }
-
-        // Create post
-        <span class="cov5" title="3">post := application.Post{
-                Metadata: application.FrontMatter{
-                        Title:       title,
-                        Date:        time.Now().Format("2006-01-02T15:04:05Z07:00"),
-                        Draft:       r.FormValue("draft") == "on",
-                        PublishDate: time.Now().Format("2006-01-02T15:04:05Z07:00"),
-                        Slug:        slug,
-                        Tags:        tagList,
-                },
-                Content: content,
-        }
-
-        // Create the post file
-        contentPath := filepath.Join(sitePath, "content")
-        err = application.CreatePost(contentPath, post)
-        if err != nil </span><span class="cov0" title="0">{
-                h.logger.Error("Error creating post", "err", err)
-                http.Error(w, "Error creating post", http.StatusInternalServerError)
-                return
-        }</span>
-
-        // Redirect to home page
-        <span class="cov5" title="3">http.Redirect(w, r, "/", http.StatusSeeOther)</span>
-}
-
-func (h *PostHandler) Get(w http.ResponseWriter, r *http.Request) <span class="cov5" title="3">{
-        postPath := r.URL.Query().Get("path")
-        if postPath == "" </span><span class="cov1" title="1">{
-                http.Error(w, "Post path required", http.StatusBadRequest)
-                return
-        }</span>
-
-        <span class="cov3" title="2">post, err := application.GetPost(postPath)
-        if err != nil </span><span class="cov1" title="1">{
-                h.logger.Error("Error loading post", "err", err)
-                http.Error(w, "Error loading post", http.StatusInternalServerError)
-                return
-        }</span>
-
-        <span class="cov1" title="1">c := templates.Post(post)
-        err = templates.Layout(c).Render(r.Context(), w)
-
-        if err != nil </span><span class="cov0" title="0">{
-                http.Error(w, "Error rendering template", http.StatusInternalServerError)
-                return
-        }</span>
-}
-</pre>
-		
-		<pre class="file" id="file5" style="display: none">// Code generated by templ - DO NOT EDIT.
+		<pre class="file" id="file3" style="display: none">// Code generated by templ - DO NOT EDIT.
 
 // templ: version: v0.3.906
 package templates
@@ -665,9 +506,146 @@ package templates
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/jaredhaight/lovecms/internal/application"
+import "github.com/jaredhaight/lovecms/internal/types"
+import "strings"
 
-func Home(posts []application.Post) templ.Component <span class="cov0" title="0">{
+func Editor(post types.Post, isEdit bool) templ.Component <span class="cov0" title="0">{
+        return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) </span><span class="cov0" title="0">{
+                templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+                if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil </span><span class="cov0" title="0">{
+                        return templ_7745c5c3_CtxErr
+                }</span>
+                <span class="cov0" title="0">templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+                if !templ_7745c5c3_IsBuffer </span><span class="cov0" title="0">{
+                        defer func() </span><span class="cov0" title="0">{
+                                templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+                                if templ_7745c5c3_Err == nil </span><span class="cov0" title="0">{
+                                        templ_7745c5c3_Err = templ_7745c5c3_BufErr
+                                }</span>
+                        }()
+                }
+                <span class="cov0" title="0">ctx = templ.InitializeContext(ctx)
+                templ_7745c5c3_Var1 := templ.GetChildren(ctx)
+                if templ_7745c5c3_Var1 == nil </span><span class="cov0" title="0">{
+                        templ_7745c5c3_Var1 = templ.NopComponent
+                }</span>
+                <span class="cov0" title="0">ctx = templ.ClearChildren(ctx)
+                templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "&lt;div class=\"flex flex-col prose w-full max-w-4xl mx-auto\"&gt;&lt;div class=\"mb-6\"&gt;")
+                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                        return templ_7745c5c3_Err
+                }</span>
+                <span class="cov0" title="0">if isEdit </span><span class="cov0" title="0">{
+                        templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "&lt;h1&gt;Edit Post&lt;/h1&gt;")
+                        if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                                return templ_7745c5c3_Err
+                        }</span>
+                } else<span class="cov0" title="0"> {
+                        templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "&lt;h1&gt;Create New Post&lt;/h1&gt;")
+                        if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                                return templ_7745c5c3_Err
+                        }</span>
+                }
+                <span class="cov0" title="0">templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "&lt;/div&gt;&lt;form method=\"POST\" class=\"space-y-4\"&gt;&lt;div class=\"form-control w-full\"&gt;&lt;label class=\"label\"&gt;&lt;span class=\"label-text\"&gt;Title&lt;/span&gt;&lt;/label&gt; &lt;input type=\"text\" name=\"title\" value=\"")
+                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                        return templ_7745c5c3_Err
+                }</span>
+                <span class="cov0" title="0">var templ_7745c5c3_Var2 string
+                templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(post.Metadata.Title)
+                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                        return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/editor.templ`, Line: 21, Col: 75}
+                }</span>
+                <span class="cov0" title="0">_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                        return templ_7745c5c3_Err
+                }</span>
+                <span class="cov0" title="0">templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" placeholder=\"Enter post title\" class=\"input input-bordered w-full\" required&gt;&lt;/div&gt;&lt;div class=\"form-control w-full\"&gt;&lt;label class=\"label\"&gt;&lt;span class=\"label-text\"&gt;Slug (URL-friendly name)&lt;/span&gt;&lt;/label&gt; &lt;input type=\"text\" name=\"slug\" value=\"")
+                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                        return templ_7745c5c3_Err
+                }</span>
+                <span class="cov0" title="0">var templ_7745c5c3_Var3 string
+                templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(post.Metadata.Slug)
+                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                        return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/editor.templ`, Line: 28, Col: 73}
+                }</span>
+                <span class="cov0" title="0">_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                        return templ_7745c5c3_Err
+                }</span>
+                <span class="cov0" title="0">templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" placeholder=\"post-slug\" class=\"input input-bordered w-full\"&gt; &lt;label class=\"label\"&gt;&lt;span class=\"label-text-alt\"&gt;Leave empty to auto-generate from title&lt;/span&gt;&lt;/label&gt;&lt;/div&gt;&lt;div class=\"form-control w-full\"&gt;&lt;label class=\"label\"&gt;&lt;span class=\"label-text\"&gt;Tags&lt;/span&gt;&lt;/label&gt; &lt;input type=\"text\" name=\"tags\" value=\"")
+                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                        return templ_7745c5c3_Err
+                }</span>
+                <span class="cov0" title="0">var templ_7745c5c3_Var4 string
+                templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(strings.Join(post.Metadata.Tags, ", "))
+                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                        return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/editor.templ`, Line: 38, Col: 93}
+                }</span>
+                <span class="cov0" title="0">_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                        return templ_7745c5c3_Err
+                }</span>
+                <span class="cov0" title="0">templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" placeholder=\"tag1, tag2, tag3\" class=\"input input-bordered w-full\"&gt; &lt;label class=\"label\"&gt;&lt;span class=\"label-text-alt\"&gt;Separate tags with commas&lt;/span&gt;&lt;/label&gt;&lt;/div&gt;&lt;div class=\"form-control\"&gt;&lt;label class=\"label cursor-pointer justify-start\"&gt;&lt;input type=\"checkbox\" name=\"draft\" class=\"checkbox\"")
+                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                        return templ_7745c5c3_Err
+                }</span>
+                <span class="cov0" title="0">if post.Metadata.Draft </span><span class="cov0" title="0">{
+                        templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " checked")
+                        if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                                return templ_7745c5c3_Err
+                        }</span>
+                }
+                <span class="cov0" title="0">templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "&gt; &lt;span class=\"label-text ml-2\"&gt;Save as draft&lt;/span&gt;&lt;/label&gt;&lt;/div&gt;&lt;div class=\"form-control w-full\"&gt;&lt;label class=\"label\"&gt;&lt;span class=\"label-text\"&gt;Content&lt;/span&gt;&lt;/label&gt; &lt;textarea name=\"content\" rows=\"20\" placeholder=\"Write your post content in Markdown...\" class=\"textarea textarea-bordered w-full h-96\"&gt;")
+                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                        return templ_7745c5c3_Err
+                }</span>
+                <span class="cov0" title="0">var templ_7745c5c3_Var5 string
+                templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(post.Content)
+                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                        return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/editor.templ`, Line: 58, Col: 165}
+                }</span>
+                <span class="cov0" title="0">_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                        return templ_7745c5c3_Err
+                }</span>
+                <span class="cov0" title="0">templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "&lt;/textarea&gt;&lt;/div&gt;&lt;div class=\"flex gap-4 pt-4\"&gt;&lt;button type=\"submit\" class=\"btn btn-primary\"&gt;")
+                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                        return templ_7745c5c3_Err
+                }</span>
+                <span class="cov0" title="0">if isEdit </span><span class="cov0" title="0">{
+                        templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "Update Post")
+                        if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                                return templ_7745c5c3_Err
+                        }</span>
+                } else<span class="cov0" title="0"> {
+                        templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "Create Post")
+                        if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                                return templ_7745c5c3_Err
+                        }</span>
+                }
+                <span class="cov0" title="0">templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "&lt;/button&gt; &lt;a href=\"/\" class=\"btn btn-secondary\"&gt;Cancel&lt;/a&gt;&lt;/div&gt;&lt;/form&gt;&lt;/div&gt;")
+                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
+                        return templ_7745c5c3_Err
+                }</span>
+                <span class="cov0" title="0">return nil</span>
+        })
+}
+
+var _ = templruntime.GeneratedTemplate
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">// Code generated by templ - DO NOT EDIT.
+
+// templ: version: v0.3.906
+package templates
+
+//lint:file-ignore SA4006 This context is only used if a nested component is present.
+
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
+
+import "github.com/jaredhaight/lovecms/internal/types"
+
+func Home(posts []types.Post) templ.Component <span class="cov0" title="0">{
         return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) </span><span class="cov0" title="0">{
                 templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
                 if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil </span><span class="cov0" title="0">{
@@ -689,7 +667,7 @@ func Home(posts []application.Post) templ.Component <span class="cov0" title="0"
                 }</span>
                 <span class="cov0" title="0">ctx = templ.ClearChildren(ctx)
                 var i = 0
-                templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "&lt;div class=\"flex-row prose\"&gt;&lt;div class=\"flex justify-between items-center mb-6\"&gt;&lt;h1 class=\"m-0 p-0\"&gt;Posts&lt;/h1&gt;&lt;button class=\"btn btn-soft btn-primary\"&gt;&lt;a href=\"/posts/new\"&gt;Create New Post&lt;/a&gt;&lt;/button&gt;&lt;/div&gt;")
+                templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "&lt;div class=\"flex-row prose\"&gt;&lt;div class=\"flex justify-between items-center mb-6\"&gt;&lt;h1 class=\"m-0 p-0\"&gt;Posts&lt;/h1&gt;&lt;button class=\"btn btn-soft btn-primary\"&gt;&lt;a href=\"/editor/\"&gt;Create New Post&lt;/a&gt;&lt;/button&gt;&lt;/div&gt;")
                 if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
                         return templ_7745c5c3_Err
                 }</span>
@@ -705,9 +683,9 @@ func Home(posts []application.Post) templ.Component <span class="cov0" title="0"
                                 return templ_7745c5c3_Err
                         }</span>
                         <span class="cov0" title="0">var templ_7745c5c3_Var2 templ.SafeURL
-                        templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL("/post?path=" + post.FilePath))
+                        templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinURLErrs(templ.URL("/editor/?path=" + post.FilePath))
                         if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                                return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/home.templ`, Line: 20, Col: 73}
+                                return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/home.templ`, Line: 20, Col: 76}
                         }</span>
                         <span class="cov0" title="0">_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
                         if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
@@ -720,7 +698,7 @@ func Home(posts []application.Post) templ.Component <span class="cov0" title="0"
                         <span class="cov0" title="0">var templ_7745c5c3_Var3 string
                         templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(post.Metadata.Title)
                         if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                                return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/home.templ`, Line: 20, Col: 97}
+                                return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/home.templ`, Line: 20, Col: 100}
                         }</span>
                         <span class="cov0" title="0">_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
                         if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
@@ -779,7 +757,7 @@ func Home(posts []application.Post) templ.Component <span class="cov0" title="0"
 var _ = templruntime.GeneratedTemplate
 </pre>
 		
-		<pre class="file" id="file6" style="display: none">// Code generated by templ - DO NOT EDIT.
+		<pre class="file" id="file5" style="display: none">// Code generated by templ - DO NOT EDIT.
 
 // templ: version: v0.3.906
 package templates
@@ -866,209 +844,7 @@ func Layout(contents templ.Component) templ.Component <span class="cov0" title="
 var _ = templruntime.GeneratedTemplate
 </pre>
 		
-		<pre class="file" id="file7" style="display: none">// Code generated by templ - DO NOT EDIT.
-
-// templ: version: v0.3.906
-package templates
-
-//lint:file-ignore SA4006 This context is only used if a nested component is present.
-
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
-
-import "github.com/jaredhaight/lovecms/internal/application"
-import "strings"
-
-func PostForm(post application.Post, isEdit bool) templ.Component <span class="cov0" title="0">{
-        return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) </span><span class="cov0" title="0">{
-                templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-                if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_CtxErr
-                }</span>
-                <span class="cov0" title="0">templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-                if !templ_7745c5c3_IsBuffer </span><span class="cov0" title="0">{
-                        defer func() </span><span class="cov0" title="0">{
-                                templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-                                if templ_7745c5c3_Err == nil </span><span class="cov0" title="0">{
-                                        templ_7745c5c3_Err = templ_7745c5c3_BufErr
-                                }</span>
-                        }()
-                }
-                <span class="cov0" title="0">ctx = templ.InitializeContext(ctx)
-                templ_7745c5c3_Var1 := templ.GetChildren(ctx)
-                if templ_7745c5c3_Var1 == nil </span><span class="cov0" title="0">{
-                        templ_7745c5c3_Var1 = templ.NopComponent
-                }</span>
-                <span class="cov0" title="0">ctx = templ.ClearChildren(ctx)
-                templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "&lt;div class=\"flex flex-col prose w-full max-w-4xl mx-auto\"&gt;&lt;div class=\"mb-6\"&gt;")
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">if isEdit </span><span class="cov0" title="0">{
-                        templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "&lt;h1&gt;Edit Post&lt;/h1&gt;")
-                        if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                                return templ_7745c5c3_Err
-                        }</span>
-                } else<span class="cov0" title="0"> {
-                        templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "&lt;h1&gt;Create New Post&lt;/h1&gt;")
-                        if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                                return templ_7745c5c3_Err
-                        }</span>
-                }
-                <span class="cov0" title="0">templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "&lt;/div&gt;&lt;form method=\"POST\" class=\"space-y-4\"&gt;&lt;div class=\"form-control w-full\"&gt;&lt;label class=\"label\"&gt;&lt;span class=\"label-text\"&gt;Title&lt;/span&gt;&lt;/label&gt; &lt;input type=\"text\" name=\"title\" value=\"")
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">var templ_7745c5c3_Var2 string
-                templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(post.Metadata.Title)
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/post_form.templ`, Line: 22, Col: 75}
-                }</span>
-                <span class="cov0" title="0">_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" placeholder=\"Enter post title\" class=\"input input-bordered w-full\" required&gt;&lt;/div&gt;&lt;div class=\"form-control w-full\"&gt;&lt;label class=\"label\"&gt;&lt;span class=\"label-text\"&gt;Slug (URL-friendly name)&lt;/span&gt;&lt;/label&gt; &lt;input type=\"text\" name=\"slug\" value=\"")
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">var templ_7745c5c3_Var3 string
-                templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(post.Metadata.Slug)
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/post_form.templ`, Line: 29, Col: 73}
-                }</span>
-                <span class="cov0" title="0">_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" placeholder=\"post-slug\" class=\"input input-bordered w-full\"&gt; &lt;label class=\"label\"&gt;&lt;span class=\"label-text-alt\"&gt;Leave empty to auto-generate from title&lt;/span&gt;&lt;/label&gt;&lt;/div&gt;&lt;div class=\"form-control w-full\"&gt;&lt;label class=\"label\"&gt;&lt;span class=\"label-text\"&gt;Tags&lt;/span&gt;&lt;/label&gt; &lt;input type=\"text\" name=\"tags\" value=\"")
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">var templ_7745c5c3_Var4 string
-                templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(strings.Join(post.Metadata.Tags, ", "))
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/post_form.templ`, Line: 39, Col: 93}
-                }</span>
-                <span class="cov0" title="0">_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" placeholder=\"tag1, tag2, tag3\" class=\"input input-bordered w-full\"&gt; &lt;label class=\"label\"&gt;&lt;span class=\"label-text-alt\"&gt;Separate tags with commas&lt;/span&gt;&lt;/label&gt;&lt;/div&gt;&lt;div class=\"form-control\"&gt;&lt;label class=\"label cursor-pointer justify-start\"&gt;&lt;input type=\"checkbox\" name=\"draft\" class=\"checkbox\"")
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">if post.Metadata.Draft </span><span class="cov0" title="0">{
-                        templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " checked")
-                        if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                                return templ_7745c5c3_Err
-                        }</span>
-                }
-                <span class="cov0" title="0">templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "&gt; &lt;span class=\"label-text ml-2\"&gt;Save as draft&lt;/span&gt;&lt;/label&gt;&lt;/div&gt;&lt;div class=\"form-control w-full\"&gt;&lt;label class=\"label\"&gt;&lt;span class=\"label-text\"&gt;Content&lt;/span&gt;&lt;/label&gt; &lt;textarea name=\"content\" rows=\"20\" placeholder=\"Write your post content in Markdown...\" class=\"textarea textarea-bordered w-full h-96\"&gt;")
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">var templ_7745c5c3_Var5 string
-                templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(post.Content)
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/post_form.templ`, Line: 59, Col: 165}
-                }</span>
-                <span class="cov0" title="0">_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "&lt;/textarea&gt;&lt;/div&gt;&lt;div class=\"flex gap-4 pt-4\"&gt;&lt;button type=\"submit\" class=\"btn btn-primary\"&gt;")
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">if isEdit </span><span class="cov0" title="0">{
-                        templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "Update Post")
-                        if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                                return templ_7745c5c3_Err
-                        }</span>
-                } else<span class="cov0" title="0"> {
-                        templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "Create Post")
-                        if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                                return templ_7745c5c3_Err
-                        }</span>
-                }
-                <span class="cov0" title="0">templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "&lt;/button&gt; &lt;a href=\"/\" class=\"btn btn-secondary\"&gt;Cancel&lt;/a&gt;&lt;/div&gt;&lt;/form&gt;&lt;/div&gt;")
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">return nil</span>
-        })
-}
-
-var _ = templruntime.GeneratedTemplate
-</pre>
-		
-		<pre class="file" id="file8" style="display: none">// Code generated by templ - DO NOT EDIT.
-
-// templ: version: v0.3.906
-package templates
-
-//lint:file-ignore SA4006 This context is only used if a nested component is present.
-
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
-
-import "github.com/jaredhaight/lovecms/internal/application"
-
-func Post(post application.Post) templ.Component <span class="cov0" title="0">{
-        return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) </span><span class="cov0" title="0">{
-                templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-                if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_CtxErr
-                }</span>
-                <span class="cov0" title="0">templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-                if !templ_7745c5c3_IsBuffer </span><span class="cov0" title="0">{
-                        defer func() </span><span class="cov0" title="0">{
-                                templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-                                if templ_7745c5c3_Err == nil </span><span class="cov0" title="0">{
-                                        templ_7745c5c3_Err = templ_7745c5c3_BufErr
-                                }</span>
-                        }()
-                }
-                <span class="cov0" title="0">ctx = templ.InitializeContext(ctx)
-                templ_7745c5c3_Var1 := templ.GetChildren(ctx)
-                if templ_7745c5c3_Var1 == nil </span><span class="cov0" title="0">{
-                        templ_7745c5c3_Var1 = templ.NopComponent
-                }</span>
-                <span class="cov0" title="0">ctx = templ.ClearChildren(ctx)
-                templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "&lt;div class=\"flex flex-col prose w-1/1\"&gt;&lt;div&gt;&lt;h1 id=\"title\"&gt;")
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">var templ_7745c5c3_Var2 string
-                templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(post.Metadata.Title)
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/templates/post.templ`, Line: 8, Col: 44}
-                }</span>
-                <span class="cov0" title="0">_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "&lt;/h1&gt;&lt;/div&gt;&lt;div id=\"editor\"&gt;")
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">templ_7745c5c3_Err = templ.Raw(post.Content).Render(ctx, templ_7745c5c3_Buffer)
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "&lt;/div&gt;&lt;div&gt;&lt;button class=\"btn btn-lg float-right\"&gt;Submit&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;")
-                if templ_7745c5c3_Err != nil </span><span class="cov0" title="0">{
-                        return templ_7745c5c3_Err
-                }</span>
-                <span class="cov0" title="0">return nil</span>
-        })
-}
-
-var _ = templruntime.GeneratedTemplate
-</pre>
-		
-		<pre class="file" id="file9" style="display: none">// Package testhelpers provides common utilities for testing LoveCMS
+		<pre class="file" id="file6" style="display: none">// Package testhelpers provides common utilities for testing LoveCMS
 package testhelpers
 
 import (
@@ -1077,6 +853,7 @@ import (
         "testing"
 
         "github.com/jaredhaight/lovecms/internal/application"
+        "github.com/jaredhaight/lovecms/internal/types"
 )
 
 // CreateTempSite creates a temporary directory structure that mimics a LoveCMS site
@@ -1104,7 +881,7 @@ func CreateTempSite(t *testing.T) (siteDir string, cleanup func()) <span class="
 }
 
 // CreateTestPost creates a test post file in the specified directory
-func CreateTestPost(t *testing.T, contentDir, filename string, post application.Post) string <span class="cov0" title="0">{
+func CreateTestPost(t *testing.T, contentDir, filename string, post types.Post) string <span class="cov0" title="0">{
         t.Helper()
 
         // Set the file path
@@ -1123,9 +900,9 @@ func CreateTestPost(t *testing.T, contentDir, filename string, post application.
 func CreateSamplePosts(t *testing.T, contentDir string) []string <span class="cov0" title="0">{
         t.Helper()
 
-        posts := []application.Post{
+        posts := []types.Post{
                 {
-                        Metadata: application.FrontMatter{
+                        Metadata: types.FrontMatter{
                                 Title:       "First Test Post",
                                 Date:        "2023-01-03T00:00:00Z",
                                 Draft:       false,
@@ -1136,7 +913,7 @@ func CreateSamplePosts(t *testing.T, contentDir string) []string <span class="co
                         Content: "# First Test Post\n\nThis is the content of the first test post.",
                 },
                 {
-                        Metadata: application.FrontMatter{
+                        Metadata: types.FrontMatter{
                                 Title:       "Second Test Post",
                                 Date:        "2023-01-02T00:00:00Z",
                                 Draft:       false,
@@ -1147,7 +924,7 @@ func CreateSamplePosts(t *testing.T, contentDir string) []string <span class="co
                         Content: "# Second Test Post\n\nThis is the content of the second test post.",
                 },
                 {
-                        Metadata: application.FrontMatter{
+                        Metadata: types.FrontMatter{
                                 Title:       "Draft Post",
                                 Date:        "2023-01-01T00:00:00Z",
                                 Draft:       true,
@@ -1171,7 +948,7 @@ func CreateSamplePosts(t *testing.T, contentDir string) []string <span class="co
 }
 
 // AssertPostEqual compares two posts for equality
-func AssertPostEqual(t *testing.T, got, want application.Post) <span class="cov0" title="0">{
+func AssertPostEqual(t *testing.T, got, want types.Post) <span class="cov0" title="0">{
         t.Helper()
 
         if got.Metadata.Title != want.Metadata.Title </span><span class="cov0" title="0">{

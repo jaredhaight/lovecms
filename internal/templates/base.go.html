@@ -1,0 +1,21 @@
+{{ define "base" }}
+<!doctype html>
+<html lang='en'>
+	<head>
+		<title>❤️CMS</title>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<link rel="stylesheet" href="/static/css/lovecms.css"/>
+		<!-- eventually we'll ship the below with the compiled binary -->
+		<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+		<script src="//unpkg.com/alpinejs" defer></script>
+        {{ template "head" }}
+	</head>
+	<body class="flex flex-col">
+		<main class="flex px-10 md:px-20 justify-center">
+            {{ template "main" . }}
+		</main>
+	</body>
+    {{ template "scripts"}}
+</html>
+{{ end }}
