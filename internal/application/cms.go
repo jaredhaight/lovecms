@@ -43,6 +43,7 @@ func (h *CmsHandler) GetHome(w http.ResponseWriter, r *http.Request) {
 		h.logger.Info("No current site defined. Redirecting to setup")
 		http.Redirect(w, r, "/setup", http.StatusFound)
 		return
+		return
 	}
 
 	contentPath := filepath.Join(sitePath, "content")
