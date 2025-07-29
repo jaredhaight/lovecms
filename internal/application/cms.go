@@ -95,8 +95,8 @@ func (h *CmsHandler) GetEditor(w http.ResponseWriter, r *http.Request) {
 	var post = types.Post{}
 	var isEdit = false
 
-	if r.URL.Path == "/post/edit" {
-		// if we're at /post/edit, we need to load the existing post
+	if strings.HasPrefix(r.URL.Path, "/editor/") {
+		// if we're at /editor/, we need to load the existing post
 		postPath := r.URL.Query().Get("path")
 
 		// if no path is provided, return an error
