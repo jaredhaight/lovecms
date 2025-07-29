@@ -43,7 +43,6 @@ func (h *CmsHandler) GetHome(w http.ResponseWriter, r *http.Request) {
 		h.logger.Info("No current site defined. Redirecting to setup")
 		http.Redirect(w, r, "/setup", http.StatusFound)
 		return
-		return
 	}
 
 	contentPath := filepath.Join(sitePath, "content")
@@ -94,19 +93,13 @@ func (h *CmsHandler) GetEditor(w http.ResponseWriter, r *http.Request) {
 
 	var post = types.Post{}
 	var isEdit = false
+	var err error
 
-	if strings.HasPrefix(r.URL.Path, "/editor/") {
-		// if we're at /editor/, we need to load the existing post
-		postPath := r.URL.Query().Get("path")
+	// get post path
+	postPath := r.URL.Query().Get("path")
 
-		// if no path is provided, return an error
-		if postPath == "" {
-			http.Error(w, "Post path required", http.StatusBadRequest)
-			return
-		}
-
-		// Load the existing post
-		var err error
+	// Load the existing post is we have postpath
+	if postPath != "" {
 		post, err = GetPost(postPath)
 		if err != nil {
 			h.logger.Error("Error loading post", "err", err)
