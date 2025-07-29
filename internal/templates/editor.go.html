@@ -1,0 +1,84 @@
+{{define "head"}}
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+{{ end }}
+
+{{define "main"}}
+<form method="POST" class="flex flex-col prose min-w-screen p-2">
+    <div id="title-container" class="flex flex-row w-full items-center">
+        <div class="flex flex-col min-w-xs p-2 mr-4">
+            {{if .IsEdit}}
+            <h1 class="m-0">Edit Post</h1>
+            {{else}}
+            <h1 class="m-0">Create New Post</h1>
+            {{end}}
+        </div>
+        <div class="flex flex-col grow px-2 py-4">
+            <div class="form-control w-full">
+                <input type="text" name="title" value="{{.Post.Metadata.Title}}" placeholder="Enter post title"
+                    class="input input-bordered w-full h-18 text-lg" required />
+            </div>
+        </div>
+    </div>
+    <div id="content-container" class="flex flex-row">
+        <div id="sidebar-container" class="flex flex-col max-w-xs p-2 mr-4">
+            <div class="form-control py-2">
+                <label class="label">
+                    <span class="label-text">Slug (URL-friendly name)</span>
+                </label>
+                <input type="text" name="slug" value="{{.Post.Metadata.Slug}}" placeholder="post-slug"
+                    class="input input-bordered w-full" />
+                <label class="label">
+                    <span class="label-text-alt">Leave empty to auto-generate from title</span>
+                </label>
+            </div>
+
+            <div class="form-control py-2">
+                <label class="label">
+                    <span class="label-text">Tags</span>
+                </label>
+                <input type="text" name="tags" value="{{join ", " .Post.Metadata.Tags}}"
+                    placeholder="tag1, tag2, tag3" class="input input-bordered w-full" />
+                <label class="label">
+                    <span class="label-text-alt">Separate tags with commas</span>
+                </label>
+            </div>
+
+            <div class="form-control py-2">
+                <label class="label cursor-pointer justify-start">
+                    <input type="checkbox" name="draft" class="checkbox" {{if
+                        .Post.Metadata.Draft}}checked{{end}} />
+                    <span class="label-text ml-2">Save as draft</span>
+                </label>
+            </div>
+
+            <div class="flex gap-4 pt-4 px-2">
+                <button type="submit" class="btn btn-primary">
+                    {{if .IsEdit}}
+                    Update Post
+                    {{else}}
+                    Create Post
+                    {{end}}
+                </button>
+                <a href="/" class="btn btn-secondary">Cancel</a>
+            </div>
+        </div>
+
+        <!-- EDITOR -->
+        <div id="editor-container" class="flex flex-col grow p-2">
+            <div class="form-control w-full">
+                <textarea id="editor" name="content" rows="20" placeholder="Write your post content in Markdown..."
+                    class="textarea textarea-bordered w-full h-96">{{.Post.Content}}</textarea>
+            </div>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{ define "scripts" }}
+<script>
+    var quill = new Quill('#editor', {
+        theme: 'snow'
+    });
+</script>
+{{ end }}

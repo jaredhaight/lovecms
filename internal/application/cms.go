@@ -1,13 +1,13 @@
 package application
 
 import (
+	"html/template"
 	"log/slog"
 	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/jaredhaight/lovecms/internal/templates"
 	"github.com/jaredhaight/lovecms/internal/types"
 	"github.com/spf13/viper"
 )
@@ -15,6 +15,15 @@ import (
 type CmsHandler struct {
 	config *viper.Viper
 	logger *slog.Logger
+}
+
+type HomeData struct {
+	Posts []types.Post
+}
+
+type EditorData struct {
+	Post   types.Post
+	IsEdit bool
 }
 
 func NewCmsHandler(v *viper.Viper, l *slog.Logger) *CmsHandler {
@@ -33,6 +42,7 @@ func (h *CmsHandler) GetHome(w http.ResponseWriter, r *http.Request) {
 	if sitePath == "" {
 		h.logger.Info("No current site defined. Redirecting to setup")
 		http.Redirect(w, r, "/setup", http.StatusFound)
+		return
 	}
 
 	contentPath := filepath.Join(sitePath, "content")
@@ -44,10 +54,26 @@ func (h *CmsHandler) GetHome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := templates.Home(p)
-	err = templates.Layout(c).Render(r.Context(), w)
+	data := HomeData{
+		Posts: p,
+	}
+
+	files := []string{
+		"./internal/templates/base.go.html",
+		"./internal/templates/home.go.html",
+	}
+
+	ts, err := template.ParseFiles(files...)
 
 	if err != nil {
+		h.logger.Error("Error parsing templates", "err", err)
+		http.Error(w, "Error parsing templates", http.StatusInternalServerError)
+		return
+	}
+
+	err = ts.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		h.logger.Error("Error executing template", "err", err)
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 		return
 	}
@@ -65,41 +91,47 @@ func (h *CmsHandler) GetEditor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if we're at /post/new, we need to just render the CMS
-	if r.URL.Path == "/post/new" {
-		// Create a new post form
-		c := templates.Editor(types.Post{}, false)
-		err := templates.Layout(c).Render(r.Context(), w)
+	var post = types.Post{}
+	var isEdit = false
+	var err error
 
-		if err != nil {
-			http.Error(w, "Error rendering template", http.StatusInternalServerError)
-			return
-		}
-		return
-	}
-
-	// if we're at /post/edit, we need to load the existing post
+	// get post path
 	postPath := r.URL.Query().Get("path")
 
-	// if no path is provided, return an error
-	if postPath == "" {
-		http.Error(w, "Post path required", http.StatusBadRequest)
+	// Load the existing post is we have postpath
+	if postPath != "" {
+		post, err = GetPost(postPath)
+		if err != nil {
+			h.logger.Error("Error loading post", "err", err)
+			http.Error(w, "Error loading post", http.StatusInternalServerError)
+			return
+		}
+		isEdit = true
+	}
+
+	data := EditorData{
+		Post:   post,
+		IsEdit: isEdit,
+	}
+
+	files := []string{
+		"./internal/templates/base.go.html",
+		"./internal/templates/editor.go.html",
+	}
+
+	ts, err := template.New("base").Funcs(template.FuncMap{
+		"join": join,
+	}).ParseFiles(files...)
+
+	if err != nil {
+		h.logger.Error("Error parsing templates", "err", err)
+		http.Error(w, "Error parsing templates", http.StatusInternalServerError)
 		return
 	}
 
-	// Load the existing post
-	post, err := GetPost(postPath)
-
+	err = ts.ExecuteTemplate(w, "base", data)
 	if err != nil {
-		h.logger.Error("Error loading post", "err", err)
-		http.Error(w, "Error loading post", http.StatusInternalServerError)
-		return
-	}
-
-	c := templates.Editor(post, true)
-	err = templates.Layout(c).Render(r.Context(), w)
-
-	if err != nil {
+		h.logger.Error("Error executing template", "err", err)
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 		return
 	}
@@ -162,4 +194,8 @@ func (h *CmsHandler) PostEditor(w http.ResponseWriter, r *http.Request) {
 
 	// Redirect to home page
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func join(sep string, s []string) string {
+	return strings.Join(s, sep)
 }
