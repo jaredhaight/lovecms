@@ -1,4 +1,4 @@
-@import "tailwindcss" source("../../templates/*.{templ,html,js}");
+@import "tailwindcss" source("../../templates/*.{go.html,js}");
 @plugin "@tailwindcss/typography";
 @plugin "daisyui";
 
