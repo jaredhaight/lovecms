@@ -9,25 +9,24 @@ import (
 	"strings"
 
 	"github.com/adrg/frontmatter"
-	"github.com/jaredhaight/lovecms/internal/types"
 	"github.com/yuin/goldmark"
 	"gopkg.in/yaml.v3"
 )
 
-func GetPost(postPath string) (types.Post, error) {
+func GetPost(postPath string) (Post, error) {
 	// read file contents
 	content, err := os.Open(postPath)
 
 	if err != nil {
-		return types.Post{}, err
+		return Post{}, err
 	}
 
 	// parse front matter
-	fm := types.FrontMatter{}
+	fm := FrontMatter{}
 	rest, err := frontmatter.Parse(content, &fm)
 	if err != nil {
 
-		return types.Post{}, err
+		return Post{}, err
 	}
 
 	// Markdown -> HTML
@@ -36,10 +35,10 @@ func GetPost(postPath string) (types.Post, error) {
 
 	err = md.Convert(rest, &buf)
 	if err != nil {
-		return types.Post{}, err
+		return Post{}, err
 	}
 
-	post := types.Post{
+	post := Post{
 		Metadata: fm,
 		FileName: filepath.Base(postPath),
 		FilePath: postPath,
@@ -49,7 +48,7 @@ func GetPost(postPath string) (types.Post, error) {
 	return post, nil
 }
 
-func GetPosts(directoryPath string) ([]types.Post, error) {
+func GetPosts(directoryPath string) ([]Post, error) {
 	if directoryPath == "" {
 		return nil, errors.New("directoryPath is empty")
 	}
@@ -61,8 +60,8 @@ func GetPosts(directoryPath string) ([]types.Post, error) {
 	}
 
 	// create a post object for each item
-	var post types.Post
-	var posts []types.Post
+	var post Post
+	var posts []Post
 	for _, entry := range entries {
 		ext := filepath.Ext(entry.Name())
 
@@ -85,7 +84,7 @@ func GetPosts(directoryPath string) ([]types.Post, error) {
 	return posts, nil
 }
 
-func UpdatePost(post types.Post) error {
+func UpdatePost(post Post) error {
 	// get frontmatter
 	meta, err := yaml.Marshal(post.Metadata)
 	if err != nil {
@@ -108,7 +107,7 @@ func UpdatePost(post types.Post) error {
 	return nil
 }
 
-func CreatePost(contentPath string, post types.Post) error {
+func CreatePost(contentPath string, post Post) error {
 	// Generate filename from title if slug is empty
 	var filename string
 	if post.Metadata.Slug != "" {

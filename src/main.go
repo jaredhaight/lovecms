@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"errors"
 	"flag"
 	"fmt"
@@ -11,9 +12,15 @@ import (
 	"runtime"
 
 	"github.com/charmbracelet/log"
-	"github.com/jaredhaight/lovecms/internal/application"
+	"github.com/jaredhaight/lovecms/src/application"
 	"github.com/spf13/viper"
 )
+
+//go:embed templates
+var templates embed.FS
+
+//go:embed static
+var staticFiles embed.FS
 
 var debugLogging = flag.Bool("debug", false, "Enable debug logging")
 
@@ -82,13 +89,14 @@ func main() {
 
 	// setup our servers
 	mux := http.NewServeMux()
-	fileServer := http.FileServer(http.Dir("./static"))
+	fileServer := http.FileServerFS(staticFiles)
 
 	// setup handlers
-	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
-	mux.HandleFunc("GET /{$}", application.NewCmsHandler(v, logger).GetHome)
-	mux.HandleFunc("GET /editor/", application.NewCmsHandler(v, logger).GetEditor)
-	mux.HandleFunc("POST /editor/", application.NewCmsHandler(v, logger).PostEditor)
+	var cmsHandler = application.NewCmsHandler(v, logger, templates)
+	mux.Handle("GET /static/", fileServer)
+	mux.HandleFunc("GET /{$}", cmsHandler.GetHome)
+	mux.HandleFunc("GET /editor/", cmsHandler.GetEditor)
+	mux.HandleFunc("POST /editor/", cmsHandler.PostEditor)
 
 	// start server
 	logger.Info(fmt.Sprintf("Starting server on http://localhost:%d", port))

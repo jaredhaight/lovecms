@@ -1,4 +1,4 @@
-package types
+package application
 
 type Post struct {
 	FileName string
