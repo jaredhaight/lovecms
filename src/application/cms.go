@@ -1,6 +1,7 @@
 package application
 
 import (
+	"embed"
 	"html/template"
 	"log/slog"
 	"net/http"
@@ -8,28 +9,29 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jaredhaight/lovecms/internal/types"
 	"github.com/spf13/viper"
 )
 
 type CmsHandler struct {
-	config *viper.Viper
-	logger *slog.Logger
+	config    *viper.Viper
+	logger    *slog.Logger
+	templates embed.FS
 }
 
 type HomeData struct {
-	Posts []types.Post
+	Posts []Post
 }
 
 type EditorData struct {
-	Post   types.Post
+	Post   Post
 	IsEdit bool
 }
 
-func NewCmsHandler(v *viper.Viper, l *slog.Logger) *CmsHandler {
+func NewCmsHandler(v *viper.Viper, l *slog.Logger, t embed.FS) *CmsHandler {
 	return &CmsHandler{
-		config: v,
-		logger: l,
+		config:    v,
+		logger:    l,
+		templates: t,
 	}
 }
 
@@ -58,12 +60,7 @@ func (h *CmsHandler) GetHome(w http.ResponseWriter, r *http.Request) {
 		Posts: p,
 	}
 
-	files := []string{
-		"./internal/templates/base.go.html",
-		"./internal/templates/home.go.html",
-	}
-
-	ts, err := template.ParseFiles(files...)
+	ts, err := template.ParseFS(h.templates, "templates/base.go.html", "templates/home.go.html")
 
 	if err != nil {
 		h.logger.Error("Error parsing templates", "err", err)
@@ -91,7 +88,7 @@ func (h *CmsHandler) GetEditor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var post = types.Post{}
+	var post = Post{}
 	var isEdit = false
 	var err error
 
@@ -114,14 +111,9 @@ func (h *CmsHandler) GetEditor(w http.ResponseWriter, r *http.Request) {
 		IsEdit: isEdit,
 	}
 
-	files := []string{
-		"./internal/templates/base.go.html",
-		"./internal/templates/editor.go.html",
-	}
-
 	ts, err := template.New("base").Funcs(template.FuncMap{
 		"join": join,
-	}).ParseFiles(files...)
+	}).ParseFS(h.templates, "templates/base.go.html", "templates/editor.go.html")
 
 	if err != nil {
 		h.logger.Error("Error parsing templates", "err", err)
@@ -171,8 +163,8 @@ func (h *CmsHandler) PostEditor(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create post
-	post := types.Post{
-		Metadata: types.FrontMatter{
+	post := Post{
+		Metadata: FrontMatter{
 			Title:       title,
 			Date:        time.Now().Format("2006-01-02T15:04:05Z07:00"),
 			Draft:       r.FormValue("draft") == "on",

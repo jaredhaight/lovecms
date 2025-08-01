@@ -4,8 +4,8 @@ tmp_dir = "tmp"
 
 [build]
   args_bin = []
-  bin = "./bin/lovecms.exe"
-  cmd = "npx @tailwindcss/cli -i ./static/css/input.css -o ./static/css/lovecms.css && templ generate && go build -o ./bin/lovecms ./cmd"
+  bin = "./bin/lovecms"
+  cmd = "npx @tailwindcss/cli -i ./src/static/css/input.css -o ./src/static/css/lovecms.css && go build -o ./bin/lovecms ."
   delay = 0
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]
   exclude_file = []

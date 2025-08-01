@@ -3,7 +3,6 @@ module github.com/jaredhaight/lovecms
 go 1.24.0 // indirect
 
 require (
-	github.com/a-h/templ v0.3.920
 	github.com/adrg/frontmatter v0.2.0
 	github.com/spf13/viper v1.20.1
 	github.com/yuin/goldmark v1.7.13
@@ -18,6 +17,7 @@ require (
 require (
 	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/a-h/parse v0.0.0-20250122154542-74294addb73e // indirect
+	github.com/a-h/templ v0.3.920 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
