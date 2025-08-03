@@ -37,11 +37,17 @@
                 <label class="label">
                     <span class="label-text">Tags</span>
                 </label>
-                <input type="text" name="tags" value="{{join ", " .Post.Metadata.Tags}}"
-                    placeholder="tag1, tag2, tag3" class="input input-bordered w-full" />
-                <label class="label">
-                    <span class="label-text-alt">Separate tags with commas</span>
-                </label>
+                <p class="text-sm">
+                    {{range $.Post.Metadata.Tags}}
+                    <span class="badge badge-secondary mx-1">{{.}}</span>
+                    {{end}}
+                </p>
+                <input type="text" class="input" placeholder="Add Tags" list="tags" />
+                <datalist id="tags">
+                    {{range .Tags}}
+                        <option value="{{.}}"></option>
+                    {{end}}
+                </datalist>
             </div>
 
             <div class="form-control py-2">

@@ -1,4 +1,4 @@
-package application
+package cms
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func GetPost(postPath string) (Post, error) {
+func getPost(postPath string) (Post, error) {
 	// read file contents
 	content, err := os.Open(postPath)
 
@@ -48,7 +48,7 @@ func GetPost(postPath string) (Post, error) {
 	return post, nil
 }
 
-func GetPosts(directoryPath string) ([]Post, error) {
+func getPosts(directoryPath string) ([]Post, error) {
 	if directoryPath == "" {
 		return nil, errors.New("directoryPath is empty")
 	}
@@ -67,7 +67,7 @@ func GetPosts(directoryPath string) ([]Post, error) {
 
 		if ext == ".md" || ext == ".markdown" {
 			postPath := filepath.Join(directoryPath, entry.Name())
-			post, err = GetPost(postPath)
+			post, err = getPost(postPath)
 
 			if err != nil {
 				return nil, err
@@ -84,7 +84,7 @@ func GetPosts(directoryPath string) ([]Post, error) {
 	return posts, nil
 }
 
-func UpdatePost(post Post) error {
+func updatePost(post Post) error {
 	// get frontmatter
 	meta, err := yaml.Marshal(post.Metadata)
 	if err != nil {
@@ -107,7 +107,7 @@ func UpdatePost(post Post) error {
 	return nil
 }
 
-func CreatePost(contentPath string, post Post) error {
+func createPost(contentPath string, post Post) error {
 	// Generate filename from title if slug is empty
 	var filename string
 	if post.Metadata.Slug != "" {
@@ -131,5 +131,5 @@ func CreatePost(contentPath string, post Post) error {
 	post.FilePath = filepath.Join(contentPath, filename)
 
 	// Use UpdatePost to write the file
-	return UpdatePost(post)
+	return updatePost(post)
 }

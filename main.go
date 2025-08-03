@@ -11,8 +11,9 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/jaredhaight/lovecms/internal/cms"
+
 	"github.com/charmbracelet/log"
-	"github.com/jaredhaight/lovecms/src/application"
 	"github.com/spf13/viper"
 )
 
@@ -92,11 +93,11 @@ func main() {
 	fileServer := http.FileServerFS(staticFiles)
 
 	// setup handlers
-	var cmsHandler = application.NewCmsHandler(v, logger, templates)
+	var cms = cms.New(v, logger, templates)
 	mux.Handle("GET /static/", fileServer)
-	mux.HandleFunc("GET /{$}", cmsHandler.GetHome)
-	mux.HandleFunc("GET /editor/", cmsHandler.GetEditor)
-	mux.HandleFunc("POST /editor/", cmsHandler.PostEditor)
+	mux.HandleFunc("GET /{$}", cms.HomeHandler)
+	mux.HandleFunc("GET /editor/", cms.EditorHandler)
+	mux.HandleFunc("POST /editor/", cms.CreatePostHandler)
 
 	// start server
 	logger.Info(fmt.Sprintf("Starting server on http://localhost:%d", port))

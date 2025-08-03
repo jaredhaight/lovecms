@@ -11,8 +11,16 @@
 		<script src="//unpkg.com/alpinejs" defer></script>
         {{ template "head" }}
 	</head>
-	<body class="flex flex-col">
-		<main class="flex px-10 md:px-20 justify-center">
+	<body>
+		<main class="flex flex-col">
+			<div class="navbar shadow-sm">
+				<div class="navbar-start">
+					<a class="text-xl font-semibold" href="/">❤️CMS</a>
+				</div>
+				<div class="navbar-end">
+					<a class="btn" href="/editor/">Create Post</a>
+				</div>
+				</div>
             {{ template "main" . }}
 		</main>
 	</body>

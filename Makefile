@@ -24,13 +24,13 @@ benchmark:
 
 .PHONY: tailwind-watch
 tailwind-watch:
-	npx @tailwindcss/cli -i ./src/static/css/input.css -o ./src/static/css/lovecms.css --watch
+	npx @tailwindcss/cli -i ./static/css/input.css -o ./static/css/lovecms.css --watch
 
 .PHONY: tailwind-build
 tailwind-build:
-	npx @tailwindcss/cli -i ./src/static/css/input.css -o ./src/static/css/lovecms.css
+	npx @tailwindcss/cli -i ./static/css/input.css -o ./static/css/lovecms.css
 
 .PHONY: build
 build:
 	make tailwind-build
-	go build -o ./bin/$(APP_NAME) ./src/main.go
+	go build -o ./bin/$(APP_NAME) ./main.go
