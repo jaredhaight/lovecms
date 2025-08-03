@@ -1,4 +1,4 @@
-package application
+package cms
 
 type Post struct {
 	FileName string

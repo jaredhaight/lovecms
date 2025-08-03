@@ -1,0 +1,39 @@
+{{define "head"}}{{ end}}
+{{define "main"}}
+<div class="flex flex-row  m-auto">
+    <div class="flex flex-col w-24">
+        <ul>
+            {{range $i, $tag := .Tags}}
+            <li class="badge badge-primary">{{$tag}}</li>
+            {{end}}
+        </ul>
+    </div>
+    <div class="flex-col">
+        {{range $i, $post := .Posts}}
+        {{if ne $i 0}}
+        <div class="divider"></div>
+        {{end}}
+        <div class="card w-96 bg-base-100 card-xs shadow-sm">
+            <div class="card-body">
+                <a href="/editor/?path={{$post.FilePath}}">
+                    <h2 class="card-title text-2xl">{{$post.Metadata.Title}}</h2>
+                    <p class="text-sm">Published: <span x-data="{date: new Date($el.innerText)}"
+                            x-text="date.toLocaleString()" class="datetime">
+                            {{$post.Metadata.Date}}
+                        </span>
+                    </p>
+                </a>
+                <div class="justify-end card-actions">
+                    <p class="text-sm">
+                        {{range $post.Metadata.Tags}}
+                        <span class="badge badge-secondary mx-1">{{.}}</span>
+                        {{end}}
+                    </p>
+                    </p>
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+    {{ define "scripts" }}{{ end }}
