@@ -71,27 +71,27 @@
         </div>
     </div>
     <!-- EDITOR -->
-     <div class="flex flex-col grow px-2">
-         <div id="editor">
+    <div class="flex flex-col grow px-2">
+        <div id="editor">
             {{ .Content}}
-         </div>
-     </div>
+        </div>
+    </div>
 </div>
 {{end}}
 
 {{ define "scripts" }}
 
 <script>
-const quill = new Quill('#editor', {
-  modules: {
-    toolbar: [
-      [{ header: [1, 2, false] }],
-      ['bold', 'italic', 'underline'],
-      ['image', 'code-block'],
-    ],
-  },
-  placeholder: 'Compose an epic...',
-  theme: 'snow', // or 'bubble'
-});
+    const quill = new Quill('#editor', {
+        modules: {
+            toolbar: [
+                [{ header: [1, 2, false] }],
+                ['bold', 'italic', 'underline'],
+                ['image', 'code-block'],
+            ],
+        },
+        placeholder: 'Compose an epic...',
+        theme: 'snow', // or 'bubble'
+    });
 </script>
 {{ end }}
