@@ -10,10 +10,7 @@
     </div>
     <div class="flex-col">
         {{range $i, $post := .Posts}}
-        {{if ne $i 0}}
-        <div class="divider"></div>
-        {{end}}
-        <div class="card w-96 bg-base-100 card-xs shadow-sm">
+        <div class="card w-96 bg-base-100 card-xs shadow-sm mb-4">
             <div class="card-body">
                 <a href="/editor/?path={{$post.FilePath}}">
                     <h2 class="card-title text-2xl">{{$post.Metadata.Title}}</h2>
