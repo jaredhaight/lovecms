@@ -1,3 +1,7 @@
 {
-    "makefile.configureOnOpen": false
+    "makefile.configureOnOpen": false,
+    "html.format.indentHandlebars": false,
+    "files.associations": {
+        "*.css": "tailwindcss"
+    }
 }

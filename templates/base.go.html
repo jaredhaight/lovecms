@@ -9,18 +9,27 @@
 		<!-- eventually we'll ship the below with the compiled binary -->
 		<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 		<script src="//unpkg.com/alpinejs" defer></script>
+		<script src="https://cdn.jsdelivr.net/npm/theme-change@2.4.0/index.js"></script>
         {{ template "head" }}
 	</head>
 	<body>
 		<main class="flex flex-col">
-			<div class="navbar shadow-sm">
+			<div class="navbar shadow-sm mb-4 py-4">
 				<div class="navbar-start">
-					<a class="text-xl font-semibold" href="/">❤️CMS</a>
+					<a class="text-2xl font-semibold" href="/">❤️CMS</a>
 				</div>
 				<div class="navbar-end">
 					<a class="btn" href="/editor/">Create Post</a>
+					<label class="toggle text-base-content">
+						<input data-toggle-theme="dracula,fantasy" type="checkbox" class="theme-controller" />
+
+						<svg aria-label="sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></g></svg>
+
+						<svg aria-label="moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></g></svg>
+
+					</label>
 				</div>
-				</div>
+			</div>
             {{ template "main" . }}
 		</main>
 	</body>

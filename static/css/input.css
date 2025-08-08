@@ -1,6 +1,9 @@
 @import "tailwindcss" source("../../templates/*.{go.html,js}");
 @plugin "@tailwindcss/typography";
-@plugin "daisyui";
+@plugin "daisyui" {
+  themes: fantasy --default, dracula;
+}
+  
 
 a {
     @apply no-underline;

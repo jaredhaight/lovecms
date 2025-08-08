@@ -25,9 +25,9 @@ type HomeData struct {
 }
 
 type EditorData struct {
-	Post   Post
-	Tags   []string
-	IsEdit bool
+	Post    Post
+	Tags    []string
+	Content template.HTML
 }
 
 func New(v *viper.Viper, l *slog.Logger, t embed.FS) *Cms {
@@ -120,7 +120,6 @@ func (c *Cms) EditorHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var post = Post{}
-	var isEdit = false
 	var err error
 
 	// get post path
@@ -134,13 +133,12 @@ func (c *Cms) EditorHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Error loading post", http.StatusInternalServerError)
 			return
 		}
-		isEdit = true
 	}
 
 	data := EditorData{
-		Post:   post,
-		Tags:   c.getTags(),
-		IsEdit: isEdit,
+		Post:    post,
+		Tags:    c.getTags(),
+		Content: template.HTML(post.Content),
 	}
 
 	ts, err := template.New("base").Funcs(template.FuncMap{
