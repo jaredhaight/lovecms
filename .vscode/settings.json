@@ -2,6 +2,10 @@
     "makefile.configureOnOpen": false,
     "html.format.indentHandlebars": false,
     "files.associations": {
-        "*.css": "tailwindcss"
-    }
+        "*.css": "tailwindcss",
+        "*gohtml": "html"
+    },
+    "go-template.patterns": [
+        "**/*.gohtml"
+    ]
 }

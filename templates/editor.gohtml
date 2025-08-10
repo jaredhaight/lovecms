@@ -1,0 +1,71 @@
+{{define "head"}}
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+
+<script src="/static/js/quill.imageUploader.min.js"></script>
+<link href="/static/css/quill.imageUploader.min.css" rel="stylesheet" />
+{{ end }}
+
+{{define "main"}}
+<div id="title-container" class="flex flex-row w-full items-center">
+    <div class="form-control w-full">
+        <input type="text" name="title" value="{{.Post.Metadata.Title}}" placeholder="Enter post title"
+            class="input input-bordered w-full h-18 text-lg" required />
+    </div>
+</div>
+<div class="flex flex-row">
+    <div class="form-control py-2">
+        <label class="label">
+            <span class="label-text">Tags</span>
+        </label>
+        <p class="text-sm">
+            {{range $.Post.Metadata.Tags}}
+            <span class="badge badge-secondary mx-1">{{.}}</span>
+            {{end}}
+        </p>
+        <input type="text" class="input" placeholder="Add Tags" list="tags" />
+        <datalist id="tags">
+            {{range .Tags}}
+            <option value="{{.}}"></option>
+            {{end}}
+        </datalist>
+    </div>
+</div>
+<div id="content-container" class="flex flex-row">
+    <!-- EDITOR -->
+    <div class="flex flex-col grow px-2">
+        <div id="editor">
+            {{ .Content}}
+        </div>
+    </div>
+</div>
+<div id="sidebar-container" class="flex flex-row max-w-xs p-2 mr-4">
+    <div class="flex gap-4 pt-4 px-2">
+        <button type="submit" class="btn btn-primary">
+            {{if .Content}}
+            Update Post
+            {{else}}
+            Create Post
+            {{end}}
+        </button>
+        <a href="/" class="btn btn-secondary">Cancel</a>
+    </div>
+</div>
+{{end}}
+
+{{ define "scripts" }}
+
+<script>
+    const quill = new Quill('#editor', {
+        modules: {
+            toolbar: [
+                [{ header: [1, 2, false] }],
+                ['bold', 'italic', 'underline'],
+                ['image', 'code-block'],
+            ],
+        },
+        placeholder: 'Compose an epic...',
+        theme: 'snow', // or 'bubble'
+    });
+</script>
+{{ end }}

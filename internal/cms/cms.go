@@ -91,7 +91,7 @@ func (c *Cms) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		Tags:  c.getTags(),
 	}
 
-	ts, err := template.ParseFS(c.templates, "templates/base.go.html", "templates/home.go.html")
+	ts, err := template.ParseFS(c.templates, "templates/base.gohtml", "templates/home.gohtml")
 
 	if err != nil {
 		c.logger.Error("Error parsing templates", "err", err)
@@ -143,7 +143,7 @@ func (c *Cms) EditorHandler(w http.ResponseWriter, r *http.Request) {
 
 	ts, err := template.New("base").Funcs(template.FuncMap{
 		"join": join,
-	}).ParseFS(c.templates, "templates/base.go.html", "templates/editor.go.html")
+	}).ParseFS(c.templates, "templates/base.gohtml", "templates/editor.gohtml")
 
 	if err != nil {
 		c.logger.Error("Error parsing templates", "err", err)
